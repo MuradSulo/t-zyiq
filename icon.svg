@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <clipPath id="heart"><path d="M256 412 L118 272 C74 228 78 156 128 124 C172 96 226 110 256 156 C286 110 340 96 384 124 C434 156 438 228 394 272 Z"/></clipPath>
+  </defs>
+  <rect width="512" height="512" fill="#8e1f2f"/>
+  <path d="M40 262 H150 L182 200 L218 318 L250 184 L288 300 L318 262 H472" fill="none" stroke="#ffffff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M256 412 L118 272 C74 228 78 156 128 124 C172 96 226 110 256 156 C286 110 340 96 384 124 C434 156 438 228 394 272 Z" fill="#ffffff"/>
+  <path clip-path="url(#heart)" d="M40 262 H150 L182 200 L218 318 L250 184 L288 300 L318 262 H472" fill="none" stroke="#8e1f2f" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
