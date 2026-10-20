@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Təzyiq">
+<meta name="theme-color" content="#8e1f2f">
+<title>Təzyiq Gündəliyi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a narrow logbook column — reading entry on top, then summary, trend chart, and the log. */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #1b1f2a;
+  --muted: #5d6475;
+  --line: #dfe2e9;
+  --accent: #8e1f2f;          /* oxblood, the cuff bulb */
+  --accent-ink: #ffffff;
+  --sys: #b3263a;
+  --dia: #2c5aa0;
+  --band: rgba(46, 140, 90, 0.10);
+  --c-low: #2c74b3;
+  --c-normal: #2e8c5a;
+  --c-elev: #b58a00;
+  --c-h1: #d06a12;
+  --c-h2: #c42b2b;
+  --c-crisis: #7d0f1d;
+  --f-display: "Unbounded", "Onest", system-ui, sans-serif;
+  --f-body: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-num: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12141a; --surface: #1b1e26; --ink: #e9ebf0; --muted: #9aa1b2; --line: #2c303b;
+  --accent: #d0566a; --accent-ink: #12141a; --sys: #ef6b7e; --dia: #6f9fe6; --band: rgba(80, 190, 130, 0.10);
+  --c-low: #6aa8e0; --c-normal: #55c08a; --c-elev: #e0b93a; --c-h1: #f0954a; --c-h2: #f06a6a; --c-crisis: #ff8fa0;
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #12141a; --surface: #1b1e26; --ink: #e9ebf0; --muted: #9aa1b2; --line: #2c303b;
+  --accent: #d0566a; --accent-ink: #12141a; --sys: #ef6b7e; --dia: #6f9fe6; --band: rgba(80, 190, 130, 0.10);
+  --c-low: #6aa8e0; --c-normal: #55c08a; --c-elev: #e0b93a; --c-h1: #f0954a; --c-h2: #f06a6a; --c-crisis: #ff8fa0;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 22px; }
+header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: 1.7rem; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+h1 span { color: var(--accent); }
+.sub { color: var(--muted); margin: 4px 0 0; font-size: 0.92rem; }
+h2 { font-family: var(--f-display); font-weight: 500; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+
+/* entry form */
+form .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+form .row2 { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.6fr); gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field label { font-size: 0.78rem; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; }
+.field label small { font-weight: 400; }
+form .row .field { justify-content: flex-end; }
+input, select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; width: 100%; min-width: 0; font-size: 16px; }
+input.big { font-family: var(--f-num); font-size: 1.6rem; font-weight: 700; padding: 8px 12px; }
+input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+button { font: inherit; cursor: pointer; border-radius: 9px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 9px 14px; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; padding: 11px 20px; }
+button:hover { filter: brightness(0.96); }
+.preview { font-size: 0.9rem; color: var(--muted); }
+.msg { font-size: 0.88rem; color: var(--c-h2); }
+.msg.ok { color: var(--c-normal); }
+
+/* category pill */
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+  color: var(--cat); background: color-mix(in srgb, var(--cat) 14%, transparent); }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--cat); }
+
+/* summary */
+.summary { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr)); gap: 12px; }
+.stat { display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); min-width: 0; }
+.stat .k { font-size: 0.76rem; color: var(--muted); font-weight: 600; }
+.stat .v { font-family: var(--f-num); font-weight: 700; font-size: 1.5rem; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.stat .v small { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+.stat.last { border-left: 4px solid var(--cat, var(--line)); }
+.stat.last .v { font-size: 2.1rem; }
+.stat .meta { font-size: 0.8rem; color: var(--muted); }
+
+/* chart */
+.chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 6px 12px; font-size: 0.85rem; background: transparent; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.82rem; color: var(--muted); }
+.legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.chart-box { width: 100%; overflow-x: auto; }
+svg text { font-family: var(--f-num); font-size: 11px; fill: var(--muted); }
+
+/* log */
+.log { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.92rem; min-width: 540px; }
+th { text-align: left; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+td.bp { font-family: var(--f-num); font-weight: 700; font-size: 1.05rem; white-space: nowrap; }
+td.when { white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
+td.note { color: var(--muted); max-width: 220px; overflow-wrap: anywhere; }
+td.del { text-align: right; }
+td.del button { padding: 5px 10px; font-size: 0.8rem; color: var(--muted); }
+td.del button.confirm { color: var(--c-h2); border-color: var(--c-h2); }
+.empty { color: var(--muted); padding: 10px 0; }
+.banner { font-size: 0.86rem; padding: 10px 14px; border-radius: 10px; background: color-mix(in srgb, var(--c-elev) 14%, transparent); color: var(--ink); }
+.banner[data-kind="info"] { background: color-mix(in srgb, var(--dia) 12%, transparent); }
+
+/* reference scale */
+.scale { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.scale div { padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--cat) 10%, transparent); border-left: 3px solid var(--cat); }
+.scale b { display: block; font-size: 0.85rem; color: var(--cat); }
+.scale span { font-family: var(--f-num); font-size: 0.82rem; color: var(--muted); }
+.disclaimer { font-size: 0.8rem; color: var(--muted); max-width: 70ch; }
+
+@media (max-width: 640px) {
+  form .row2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  form .row2 .field:first-child, form .row2 .field:last-child { grid-column: 1 / -1; }
+  .summary { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .stat.last { grid-column: 1 / -1; }
+  h1 { font-size: 1.4rem; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Təzyiq <span>Gündəliyi</span></h1>
+      <p class="sub">Arterial təzyiq və nəbz ölçmələrinizi qeyd edin, dinamikanı izləyin.</p>
+    </div>
+    <div class="tools">
+      <button id="exportBtn" type="button">CSV yüklə</button>
+      <button id="backupBtn" type="button">Ehtiyat nüsxə</button>
+      <button id="restoreBtn" type="button">Bərpa et</button>
+      <input id="restoreFile" type="file" accept="application/json,.json" hidden>
+    </div>
+  </header>
+
+  <div id="storeBanner" class="banner" data-kind="info" hidden></div>
+
+  <section class="panel" aria-labelledby="addTitle">
+    <h2 id="addTitle">Yeni ölçmə</h2>
+    <form id="form" novalidate>
+      <div class="row">
+        <div class="field">
+          <label for="sys">Sistolik <small>(yuxarı), mm Hg</small></label>
+          <input id="sys" class="big" type="number" inputmode="numeric" min="50" max="260" placeholder="120" required>
+        </div>
+        <div class="field">
+          <label for="dia">Diastolik <small>(aşağı), mm Hg</small></label>
+          <input id="dia" class="big" type="number" inputmode="numeric" min="30" max="180" placeholder="80" required>
+        </div>
+        <div class="field">
+          <label for="pulse">Nəbz <small>(vurğu/dəq)</small></label>
+          <input id="pulse" class="big" type="number" inputmode="numeric" min="30" max="220" placeholder="72">
+        </div>
+      </div>
+      <div class="row2" style="margin-top:12px">
+        <div class="field">
+          <label for="when">Tarix və saat</label>
+          <input id="when" type="datetime-local">
+        </div>
+        <div class="field">
+          <label for="arm">Qol / vəziyyət</label>
+          <select id="arm">
+            <option value="Sol qol">Sol qol</option>
+            <option value="Sağ qol">Sağ qol</option>
+            <option value="Oturaq">Oturaq</option>
+            <option value="Uzanmış">Uzanmış</option>
+            <option value="Ayaq üstə">Ayaq üstə</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="note">Qeyd</label>
+          <input id="note" type="text" maxlength="140" placeholder="məs. dərmandan sonra, baş ağrısı">
+        </div>
+      </div>
+      <div class="actions" style="margin-top:14px">
+        <button class="primary" type="submit" id="saveBtn">Yadda saxla</button>
+        <span id="preview" class="preview"></span>
+        <span id="msg" class="msg" role="status"></span>
+      </div>
+    </form>
+  </section>
+
+  <div id="sampleBanner" class="banner" hidden>Aşağıdakılar <b>nümunə</b> məlumatlardır. İlk ölçmənizi əlavə edən kimi öz göstəriciləriniz görünəcək.</div>
+
+  <section class="summary" id="summary" aria-label="Xülasə"></section>
+
+  <section class="panel" aria-labelledby="chartTitle">
+    <div class="chart-head">
+      <h2 id="chartTitle">Dinamika</h2>
+      <div class="seg" role="group" aria-label="Dövr">
+        <button type="button" data-range="7">7 gün</button>
+        <button type="button" data-range="30">30 gün</button>
+        <button type="button" data-range="90">90 gün</button>
+        <button type="button" data-range="0">Hamısı</button>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--sys)"></i>Sistolik</span>
+      <span><i style="background:var(--dia)"></i>Diastolik</span>
+      <span><i style="background:var(--band);height:10px"></i>Hədəf zonası (&lt;130/80)</span>
+    </div>
+    <div class="chart-box" id="chart"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="logTitle">
+    <h2 id="logTitle">Ölçmələr</h2>
+    <div class="log" id="log"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="scaleTitle">
+    <h2 id="scaleTitle">Təsnifat (mm Hg)</h2>
+    <div class="scale" id="scale"></div>
+    <p class="disclaimer">Təsnifat Amerika Ürək Assosiasiyasının (AHA) meyarlarına əsaslanır və məlumat xarakterlidir. Diaqnoz və müalicə üçün həkiminizə müraciət edin. Təzyiq 180/120-dən yuxarıdırsa və sinə ağrısı, nəfəs darlığı, görmə pozğunluğu və ya danışıq çətinliyi varsa, dərhal 103-ə zəng edin.</p>
+  </section>
+</div>
+
+<script>
+(function () {
+  const CATS = {
+    low:    { name: "Aşağı (hipotoniya)", color: "var(--c-low)",    range: "< 90 / < 60" },
+    normal: { name: "Normal",             color: "var(--c-normal)", range: "< 120 və < 80" },
+    elev:   { name: "Yüksəlmiş",          color: "var(--c-elev)",   range: "120–129 və < 80" },
+    h1:     { name: "Hipertoniya, 1-ci mərhələ", color: "var(--c-h1)", range: "130–139 və ya 80–89" },
+    h2:     { name: "Hipertoniya, 2-ci mərhələ", color: "var(--c-h2)", range: "≥ 140 və ya ≥ 90" },
+    crisis: { name: "Hipertonik kriz",    color: "var(--c-crisis)", range: "> 180 və/və ya > 120" },
+  };
+  function classify(s, d) {
+    if (s > 180 || d > 120) return "crisis";
+    if (s >= 140 || d >= 90) return "h2";
+    if (s >= 130 || d >= 80) return "h1";
+    if (s >= 120) return "elev";
+    if (s < 90 || d < 60) return "low";
+    return "normal";
+  }
+  const pill = (k) => `<span class="pill" style="--cat:${CATS[k].color}">${CATS[k].name}</span>`;
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const DAY = 86400000;
+  const pad = (n) => String(n).padStart(2, "0");
+  const fmtDate = (t) => { const d = new Date(t); return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`; };
+  const fmtTime = (t) => { const d = new Date(t); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+  const toLocalInput = (t) => { const d = new Date(t); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+
+  // ---- state ----
+  let readings = [];      // real data
+  let range = 30;
+  try { const r = localStorage.getItem("tz-range"); if (r !== null) range = +r; } catch (e) {}
+  let store = null;       // { add, remove }
+  let pendingDelete = null;
+
+  // Example data shown only while the log is empty.
+  function sampleData() {
+    const out = [], now = Date.now();
+    const base = [[132,86,74],[128,84,70],[135,88,77],[126,82,69],[138,89,80],[124,80,71],[129,83,73],[121,79,68],[133,85,75],[125,81,70],[119,78,66],[127,82,72],[122,79,69],[118,76,67]];
+    base.forEach(([s, d, p], i) => {
+      out.push({ id: "ex" + i, sys: s, dia: d, pulse: p, t: now - (base.length - 1 - i) * 2 * DAY - 8 * 3600000, arm: "Sol qol", note: i === 4 ? "nümunə: stresli gün" : "" });
+    });
+    return out;
+  }
+
+  // ---- stores ----
+  function localStore() {
+    const KEY = "tz-readings";
+    let ok = true;
+    try { readings = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { ok = false; readings = []; }
+    const save = () => { try { localStorage.setItem(KEY, JSON.stringify(readings)); } catch (e) {} };
+    if (!ok) showBanner("Brauzer qeydləri saxlamağa icazə vermir (məsələn, Gizli rejim). Səhifəni bağladıqdan sonra qeydlər itəcək.");
+    return {
+      add: async (r) => { readings.push({ ...r, id: "l" + Date.now() }); save(); render(); },
+      remove: async (id) => { readings = readings.filter((r) => r.id !== id); save(); render(); },
+    };
+  }
+  function showBanner(text) { const b = $("storeBanner"); b.textContent = text; b.hidden = false; }
+
+  function init() {
+    store = localStore();
+    render();
+  }
+
+  // ---- render ----
+  function render() {
+    const real = readings.slice().sort((a, b) => a.t - b.t);
+    const isSample = real.length === 0;
+    const data = isSample ? sampleData() : real;
+    $("sampleBanner").hidden = !isSample;
+    document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.range === range)));
+    const now = Date.now();
+    const inRange = range ? data.filter((r) => r.t >= now - range * DAY) : data;
+    renderSummary(data);
+    renderChart(inRange);
+    renderLog(inRange.slice().reverse(), isSample);
+  }
+
+  function avg(list, from) {
+    const xs = list.filter((r) => r.t >= from);
+    if (!xs.length) return null;
+    const m = (k) => Math.round(xs.reduce((a, r) => a + r[k], 0) / xs.length);
+    const ps = xs.filter((r) => r.pulse);
+    return { sys: m("sys"), dia: m("dia"), pulse: ps.length ? Math.round(ps.reduce((a, r) => a + r.pulse, 0) / ps.length) : null, n: xs.length };
+  }
+
+  function renderSummary(data) {
+    const el = $("summary");
+    const last = data[data.length - 1];
+    const now = Date.now();
+    const a7 = avg(data, now - 7 * DAY), a30 = avg(data, now - 30 * DAY);
+    const avgTile = (label, a) => `<div class="stat"><span class="k">${label}</span>${a
+      ? `<span class="v">${a.sys}/${a.dia}</span><span class="meta">${a.n} ölçmə${a.pulse ? ` · nəbz ${a.pulse}` : ""}</span>${pill(classify(a.sys, a.dia))}`
+      : `<span class="v">—</span><span class="meta">bu dövrdə ölçmə yoxdur</span>`}</div>`;
+    let maxTile = `<div class="stat"><span class="k">Ən yüksək</span><span class="v">—</span></div>`;
+    if (data.length) {
+      const mx = data.reduce((a, r) => (r.sys > a.sys ? r : a), data[0]);
+      maxTile = `<div class="stat"><span class="k">Ən yüksək</span><span class="v">${mx.sys}/${mx.dia}</span><span class="meta">${fmtDate(mx.t)}, ${fmtTime(mx.t)}</span></div>`;
+    }
+    el.innerHTML = last
+      ? `<div class="stat last" style="--cat:${CATS[classify(last.sys, last.dia)].color}"><span class="k">Son ölçmə</span><span class="v">${last.sys}/${last.dia} <small>mm Hg</small></span><span class="meta">${fmtDate(last.t)}, ${fmtTime(last.t)}${last.pulse ? ` · nəbz ${last.pulse}` : ""}</span>${pill(classify(last.sys, last.dia))}</div>`
+        + avgTile("7 günlük orta", a7) + avgTile("30 günlük orta", a30) + maxTile
+      : "";
+  }
+
+  function renderChart(list) {
+    const el = $("chart");
+    if (list.length < 2) { el.innerHTML = `<p class="empty">Qrafik üçün bu dövrdə ən azı 2 ölçmə lazımdır.</p>`; return; }
+    const W = Math.max(520, el.clientWidth || 800), H = 260, L = 38, R = 14, T = 12, B = 28;
+    const t0 = list[0].t, t1 = list[list.length - 1].t, span = Math.max(t1 - t0, 1);
+    const lo = Math.min(50, ...list.map((r) => r.dia)) , hi = Math.max(170, ...list.map((r) => r.sys));
+    const yMin = Math.floor(lo / 10) * 10, yMax = Math.ceil(hi / 10) * 10;
+    const x = (t) => L + ((t - t0) / span) * (W - L - R);
+    const y = (v) => T + (1 - (v - yMin) / (yMax - yMin)) * (H - T - B);
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="Təzyiq dinamikası qrafiki">`;
+    // target band 80..130 is drawn between diastolic target and systolic target lines
+    s += `<rect x="${L}" y="${y(130)}" width="${W - L - R}" height="${y(80) - y(130)}" fill="var(--band)"></rect>`;
+    for (let v = yMin; v <= yMax; v += 20) {
+      s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"></line>`;
+      s += `<text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+    }
+    [[140, "var(--c-h2)"], [90, "var(--c-h2)"]].forEach(([v, c]) => {
+      if (v > yMin && v < yMax) s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="${c}" stroke-dasharray="4 4" stroke-width="1" opacity="0.6"></line>`;
+    });
+    const ticks = Math.min(6, list.length);
+    for (let i = 0; i < ticks; i++) {
+      const t = t0 + (span * i) / (ticks - 1);
+      const d = new Date(t);
+      s += `<text x="${x(t)}" y="${H - 8}" text-anchor="${i === 0 ? "start" : i === ticks - 1 ? "end" : "middle"}">${pad(d.getDate())}.${pad(d.getMonth() + 1)}</text>`;
+    }
+    const line = (k, c) => {
+      const pts = list.map((r) => `${x(r.t).toFixed(1)},${y(r[k]).toFixed(1)}`).join(" ");
+      let out = `<polyline points="${pts}" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>`;
+      list.forEach((r, i) => {
+        const lastPt = i === list.length - 1;
+        out += `<circle cx="${x(r.t).toFixed(1)}" cy="${y(r[k]).toFixed(1)}" r="${lastPt ? 4.5 : 2.5}" fill="${c}" stroke="var(--surface)" stroke-width="${lastPt ? 2 : 0}"><title>${fmtDate(r.t)} ${fmtTime(r.t)} — ${r.sys}/${r.dia}</title></circle>`;
+      });
+      return out;
+    };
+    s += line("sys", "var(--sys)") + line("dia", "var(--dia)") + `</svg>`;
+    el.innerHTML = s;
+  }
+
+  function renderLog(list, isSample) {
+    const el = $("log");
+    if (!list.length) { el.innerHTML = `<p class="empty">Bu dövrdə ölçmə yoxdur.</p>`; return; }
+    el.innerHTML = `<table><thead><tr><th>Tarix</th><th>Təzyiq</th><th>Nəbz</th><th>Vəziyyət</th><th>Qeyd</th><th></th></tr></thead><tbody>${
+      list.map((r) => `<tr>
+        <td class="when">${fmtDate(r.t)}<br>${fmtTime(r.t)}</td>
+        <td class="bp">${r.sys}/${r.dia}</td>
+        <td class="num">${r.pulse || "—"}</td>
+        <td>${pill(classify(r.sys, r.dia))}<div class="preview">${esc(r.arm)}</div></td>
+        <td class="note">${esc(r.note)}</td>
+        <td class="del">${isSample ? "" : `<button type="button" data-del="${esc(r.id)}" class="${pendingDelete === r.id ? "confirm" : ""}">${pendingDelete === r.id ? "Təsdiqlə" : "Sil"}</button>`}</td>
+      </tr>`).join("")}</tbody></table>`;
+  }
+
+  function renderScale() {
+    $("scale").innerHTML = ["low", "normal", "elev", "h1", "h2", "crisis"].map((k) =>
+      `<div style="--cat:${CATS[k].color}"><b>${CATS[k].name}</b><span>${CATS[k].range}</span></div>`).join("");
+  }
+
+  // ---- interactions ----
+  const form = $("form");
+  $("when").value = toLocalInput(Date.now());
+  function livePreview() {
+    const s = +$("sys").value, d = +$("dia").value;
+    $("preview").innerHTML = s && d ? pill(classify(s, d)) : "";
+  }
+  $("sys").addEventListener("input", livePreview);
+  $("dia").addEventListener("input", livePreview);
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = $("msg"); msg.className = "msg"; msg.textContent = "";
+    const sys = parseInt($("sys").value, 10), dia = parseInt($("dia").value, 10);
+    const pulse = $("pulse").value ? parseInt($("pulse").value, 10) : null;
+    if (!(sys >= 50 && sys <= 260)) { msg.textContent = "Sistolik təzyiqi 50–260 aralığında daxil edin."; $("sys").focus(); return; }
+    if (!(dia >= 30 && dia <= 180)) { msg.textContent = "Diastolik təzyiqi 30–180 aralığında daxil edin."; $("dia").focus(); return; }
+    if (dia >= sys) { msg.textContent = "Diastolik (aşağı) göstərici sistolikdən kiçik olmalıdır."; $("dia").focus(); return; }
+    if (pulse !== null && !(pulse >= 30 && pulse <= 220)) { msg.textContent = "Nəbzi 30–220 aralığında daxil edin və ya boş saxlayın."; $("pulse").focus(); return; }
+    const t = $("when").value ? new Date($("when").value).getTime() : Date.now();
+    if (!store) { msg.textContent = "Bir az gözləyin, yaddaş hələ hazır deyil."; return; }
+    $("saveBtn").disabled = true;
+    try {
+      await store.add({ sys, dia, pulse, t, arm: $("arm").value, note: $("note").value.trim() });
+      msg.className = "msg ok";
+      msg.textContent = classify(sys, dia) === "crisis" ? "" : "Yadda saxlanıldı.";
+      if (classify(sys, dia) === "crisis") { msg.className = "msg"; msg.textContent = "Yadda saxlanıldı. Bu göstərici çox yüksəkdir: 5 dəqiqə sonra təkrar ölçün; simptomlar varsa, 103-ə zəng edin."; }
+      ["sys", "dia", "pulse", "note"].forEach((id) => ($(id).value = ""));
+      $("when").value = toLocalInput(Date.now());
+      livePreview();
+    } catch (err) {
+      msg.textContent = err && err.code === "not_granted"
+        ? "Bu artefakta yazmaq icazəniz yoxdur."
+        : "Yadda saxlamaq alınmadı. İnternet bağlantısını yoxlayıb yenidən cəhd edin.";
+    } finally { $("saveBtn").disabled = false; }
+  });
+
+  document.querySelector(".seg").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-range]"); if (!b) return;
+    range = +b.dataset.range;
+    try { localStorage.setItem("tz-range", String(range)); } catch (err) {}
+    render();
+  });
+
+  let delTimer = null;
+  $("log").addEventListener("click", async (e) => {
+    const b = e.target.closest("button[data-del]"); if (!b) return;
+    const id = b.dataset.del;
+    if (pendingDelete !== id) {
+      pendingDelete = id; render();
+      clearTimeout(delTimer); delTimer = setTimeout(() => { pendingDelete = null; render(); }, 4000);
+      return;
+    }
+    pendingDelete = null; clearTimeout(delTimer);
+    try { await store.remove(id); } catch (err) { $("msg").className = "msg"; $("msg").textContent = "Silmək alınmadı, yenidən cəhd edin."; }
+  });
+
+  function saveFile(name, text, type) {
+    const blob = new Blob([text], { type });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  function note(text, ok) { const m = $("msg"); m.className = ok ? "msg ok" : "msg"; m.textContent = text; }
+
+  $("exportBtn").onclick = () => {
+    const rows = readings.slice().sort((a, b) => a.t - b.t);
+    if (!rows.length) return note("Yükləmək üçün hələ ölçmə yoxdur.");
+    const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const csv = "﻿Tarix;Saat;Sistolik;Diastolik;Nəbz;Kateqoriya;Vəziyyət;Qeyd\n" +
+      rows.map((r) => [fmtDate(r.t), fmtTime(r.t), r.sys, r.dia, r.pulse ?? "", CATS[classify(r.sys, r.dia)].name, r.arm, r.note].map(q).join(";")).join("\n");
+    saveFile(`tezyiq-${fmtDate(Date.now())}.csv`, csv, "text/csv;charset=utf-8");
+  };
+  $("backupBtn").onclick = () => {
+    if (!readings.length) return note("Ehtiyat nüsxə üçün hələ ölçmə yoxdur.");
+    saveFile(`tezyiq-ehtiyat-${fmtDate(Date.now())}.json`, JSON.stringify({ app: "tezyiq-gundeliyi", v: 1, readings }, null, 1), "application/json");
+  };
+  $("restoreBtn").onclick = () => $("restoreFile").click();
+  $("restoreFile").onchange = async (e) => {
+    const f = e.target.files[0]; e.target.value = "";
+    if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      const list = (Array.isArray(data) ? data : data.readings || []).filter((r) => r && +r.sys && +r.dia && +r.t);
+      if (!list.length) return note("Faylda ölçmə tapılmadı.");
+      const seen = new Set(readings.map((r) => r.t + ":" + r.sys + ":" + r.dia));
+      let added = 0;
+      list.forEach((r) => {
+        const k = r.t + ":" + r.sys + ":" + r.dia;
+        if (seen.has(k)) return; seen.add(k); added++;
+        readings.push({ id: "l" + r.t + "-" + added, sys: +r.sys, dia: +r.dia, pulse: r.pulse ? +r.pulse : null, t: +r.t, arm: String(r.arm || ""), note: String(r.note || "") });
+      });
+      try { localStorage.setItem("tz-readings", JSON.stringify(readings)); } catch (err) {}
+      render();
+      note(`${added} ölçmə bərpa olundu.`, true);
+    } catch (err) { note("Fayl oxunmadı. Bu proqramın yaratdığı .json ehtiyat faylını seçin."); }
+  };
+
+  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(render, 150); });
+  renderScale();
+  init();
+})();
+</script>
+</body>
+</html>
