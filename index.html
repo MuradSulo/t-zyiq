@@ -147,6 +147,8 @@ button.confirm { color: var(--c-h2) !important; border-color: var(--c-h2) !impor
 .scale b { display: block; font-size: 0.85rem; color: var(--cat); }
 .scale span { font-family: var(--f-num); font-size: 0.82rem; color: var(--muted); }
 .scale-note { font-size: 0.82rem; color: var(--muted); margin: 0; }
+.ver { font-size: 0.78rem; color: var(--muted); text-align: center; margin: 0; }
+#updateBanner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
 .disclaimer { font-size: 0.8rem; color: var(--muted); max-width: 70ch; margin: 0; }
 
 /* medicines */
@@ -214,6 +216,7 @@ button.confirm { color: var(--c-h2) !important; border-color: var(--c-h2) !impor
     </div>
   </header>
 
+  <div id="updateBanner" class="banner no-print" data-kind="info" hidden><span>Proqramın yeni versiyası var.</span><button type="button" class="primary" id="updateBtn">Yenilə</button></div>
   <div id="storeBanner" class="banner" data-kind="info" hidden></div>
   <p id="toolMsg" class="msg no-print" role="status" hidden></p>
 
@@ -561,10 +564,14 @@ button.confirm { color: var(--c-h2) !important; border-color: var(--c-h2) !impor
     </section>
     <div class="view" id="report"></div>
   </div>
+
+  <p class="ver no-print" id="ver"></p>
 </div>
 
 <script>
 (function () {
+  const APP_VERSION = "4";
+  const APP_DATE = "26.10.2026";
   // ---------- shared ----------
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -1480,6 +1487,20 @@ button.confirm { color: var(--c-h2) !important; border-color: var(--c-h2) !impor
       toolMsg(`Bərpa olundu: ${n[0]} təzyiq, ${n[1]} şəkər, ${n[2]} HbA1c, ${n[3]} çəki, ${n[4]} dərman, ${n[5]} qəbul qeydi.`, true);
     } catch (err) { toolMsg("Fayl oxunmadı. Bu proqramın yaratdığı .json ehtiyat faylını seçin."); }
   };
+
+  // ---- update check: compare with the version on the server, bypassing the cache ----
+  $("ver").textContent = `Versiya ${APP_VERSION} · ${APP_DATE}`;
+  async function checkUpdate() {
+    if (location.protocol !== "https:") return;
+    try {
+      const res = await fetch(location.pathname + "?nocache=" + Date.now(), { cache: "no-store" });
+      const m = (await res.text()).match(/APP_VERSION = "(\d+)"/);
+      if (m && +m[1] > +APP_VERSION) $("updateBanner").hidden = false;
+    } catch (e) {}
+  }
+  $("updateBtn").addEventListener("click", () => { location.replace(location.pathname + "?v=" + Date.now()); });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") checkUpdate(); });
+  checkUpdate();
 
   let rz, lastW = window.innerWidth;
   window.addEventListener("resize", () => { if (window.innerWidth === lastW) return; lastW = window.innerWidth; clearTimeout(rz); rz = setTimeout(() => MODS[tab].render(), 150); });
