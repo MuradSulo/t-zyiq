@@ -455,6 +455,7 @@ button.confirm { color: var(--c-h2) !important; border-color: var(--c-h2) !impor
         <div class="field" style="margin-top:12px">
           <label for="wNote">Qeyd</label>
           <input id="wNote" type="text" maxlength="140" placeholder="məs. səhər, yeməkdən əvvəl">
+          <p class="hint" style="margin-top:4px">Gündəlik ölçmə üçün hər gün eyni vaxtda, səhər tualetdən sonra və yeməkdən əvvəl çəkilin.</p>
         </div>
         <div class="actions" style="margin-top:14px">
           <button class="primary" type="submit">Yadda saxla</button>
@@ -472,6 +473,7 @@ button.confirm { color: var(--c-h2) !important; border-color: var(--c-h2) !impor
       <div class="chart-head">
         <h2 id="wChartTitle">Çəki dinamikası</h2>
         <div class="seg" role="group" aria-label="Dövr">
+          <button type="button" data-range="7">7 gün</button>
           <button type="button" data-range="30">30 gün</button>
           <button type="button" data-range="90">90 gün</button>
           <button type="button" data-range="365">1 il</button>
@@ -570,8 +572,8 @@ button.confirm { color: var(--c-h2) !important; border-color: var(--c-h2) !impor
 
 <script>
 (function () {
-  const APP_VERSION = "4";
-  const APP_DATE = "26.10.2026";
+  const APP_VERSION = "5";
+  const APP_DATE = "27.10.2026";
   // ---------- shared ----------
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -1081,14 +1083,15 @@ button.confirm { color: var(--c-h2) !important; border-color: var(--c-h2) !impor
     };
     const classify = (b) => b < 18.5 ? "under" : b < 25 ? "normal" : b < 30 ? "over" : "ob";
     const view = $("view-wt");
-    let range = +lsGet("tz-wrange", "90");
+    let range = +lsGet("tz-wrange", "30");
     const height = () => { const h = +lsGet("tz-height", "0"); return h >= 100 && h <= 230 ? h : 0; };
     const bmi = (kg) => height() ? kg / Math.pow(height() / 100, 2) : null;
     const real = () => wStore.all().slice().sort((a, b) => a.t - b.t);
 
     function sampleData() {
       const now = Date.now();
-      return [84.2, 83.9, 84.0, 83.4, 83.1, 83.3, 82.8, 82.5, 82.6, 82.1, 81.9, 81.7].map((kg, i) => ({ id: "wex" + i, kg, t: now - (11 - i) * 7 * DAY, note: "" }));
+      const kgs = [83.6, 83.4, 83.7, 83.2, 83.1, 83.3, 82.9, 82.8, 83.0, 82.6, 82.7, 82.4, 82.5, 82.2];
+      return kgs.map((kg, i) => ({ id: "wex" + i, kg, t: now - (kgs.length - 1 - i) * DAY - 60000, note: "" }));
     }
 
     function render() {
@@ -1114,13 +1117,13 @@ button.confirm { color: var(--c-h2) !important; border-color: var(--c-h2) !impor
     function renderSummary(data) {
       const last = data[data.length - 1];
       const b = bmi(last.kg);
-      const c30 = change(data, 30), c90 = change(data, 90);
+      const c7 = change(data, 7), c30 = change(data, 30);
       const tile = (k, v, meta, extra = "") => `<div class="stat"><span class="k">${k}</span><span class="v">${v}</span><span class="meta">${meta}</span>${extra}</div>`;
       $("wSummary").innerHTML =
         `<div class="stat last" style="--cat:${b ? CATS[classify(b)].color : "var(--line)"}"><span class="k">Son çəki</span><span class="v">${dec(last.kg)} <small>kq</small></span><span class="meta">${fmtDate(last.t)}</span>${b ? pillOf(CATS[classify(b)]) : ""}</div>`
         + (b ? tile("BKİ (BMI)", dec(b), `boy ${height()} sm`) : tile("BKİ (BMI)", "—", "hesablamaq üçün boyunuzu yazın"))
-        + tile("30 gündə dəyişmə", c30 === null ? "—" : `${signed(c30)} <small>kq</small>`, c30 === null ? "ən azı 2 ölçmə lazımdır" : "ilk və son ölçmə arasında")
-        + tile("90 gündə dəyişmə", c90 === null ? "—" : `${signed(c90)} <small>kq</small>`, c90 === null ? "ən azı 2 ölçmə lazımdır" : "ilk və son ölçmə arasında");
+        + tile("7 gündə dəyişmə", c7 === null ? "—" : `${signed(c7)} <small>kq</small>`, c7 === null ? "ən azı 2 ölçmə lazımdır" : "ilk və son ölçmə arasında")
+        + tile("30 gündə dəyişmə", c30 === null ? "—" : `${signed(c30)} <small>kq</small>`, c30 === null ? "ən azı 2 ölçmə lazımdır" : "ilk və son ölçmə arasında");
     }
 
     function renderChart(list, el) {
@@ -1253,6 +1256,7 @@ button.confirm { color: var(--c-h2) !important; border-color: var(--c-h2) !impor
       { id: "bp-am", label: "Səhər təzyiq ölçmək", time: "08:00", on: true },
       { id: "bp-pm", label: "Axşam təzyiq ölçmək", time: "20:00", on: true },
       { id: "glu", label: "Ac qarına şəkər ölçmək", time: "07:30", on: false },
+      { id: "wt", label: "Səhər çəki ölçmək", time: "07:15", on: false },
       { id: "med-am", label: "Səhər dərmanı içmək", time: "09:00", on: false },
       { id: "med-pm", label: "Axşam dərmanı içmək", time: "21:00", on: false },
     ];
