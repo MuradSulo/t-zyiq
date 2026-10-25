@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Təzyiq">
 <meta name="theme-color" content="#8e1f2f">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
@@ -488,6 +487,16 @@ button.confirm { color: var(--c-h2) !important; border-color: var(--c-h2) !impor
       <div class="log" id="wLog"></div>
     </section>
 
+    <section class="panel" aria-labelledby="wAutoTitle">
+      <h2 id="wAutoTitle">Ağıllı tərəzidən avtomatik</h2>
+      <p class="hint">Tərəzinin tətbiqi (məs. OKOK) çəkini iPhone-un <b>Sağlamlıq</b> tətbiqinə yazırsa, <b>Qısayollar</b> tətbiqi son çəkini bu linklə proqrama ötürə bilər. Eyni ölçmə iki dəfə yazılmır.</p>
+      <div class="field">
+        <label for="wLink">Qısayol üçün link</label>
+        <input id="wLink" type="text" readonly value="https://muradsulo.github.io/t-zyiq/?kg=">
+      </div>
+      <div class="actions"><button type="button" id="wCopy">Linki kopyala</button><span id="wCopyMsg" class="msg" role="status"></span></div>
+    </section>
+
     <section class="panel" aria-labelledby="wScaleTitle">
       <h2 id="wScaleTitle">Bədən kütləsi indeksi (BKİ / BMI)</h2>
       <div class="scale" id="wScale"></div>
@@ -572,8 +581,8 @@ button.confirm { color: var(--c-h2) !important; border-color: var(--c-h2) !impor
 
 <script>
 (function () {
-  const APP_VERSION = "5";
-  const APP_DATE = "27.10.2026";
+  const APP_VERSION = "6";
+  const APP_DATE = "28.10.2026";
   // ---------- shared ----------
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -1194,6 +1203,30 @@ button.confirm { color: var(--c-h2) !important; border-color: var(--c-h2) !impor
 
     wireRange(view, (r) => { range = r; lsSet("tz-wrange", String(r)); render(); });
     wireDelete($("wLog"), (id) => wStore.remove(id), render);
+    $("wCopy").addEventListener("click", () => {
+      const v = $("wLink").value;
+      navigator.clipboard.writeText(v).then(() => note($("wCopyMsg"), "Kopyalandı.", true),
+        () => { $("wLink").select(); note($("wCopyMsg"), "Linki seçib əl ilə kopyalayın."); });
+    });
+
+    // ?kg=82,4&t=2026-10-25T07:12:00+04:00&u=kg  (sent by an iOS Shortcut from Apple Health)
+    function importFromUrl(params) {
+      let kg = parseDec(params.get("kg"));
+      if (!(kg > 0)) return null;
+      const u = String(params.get("u") || "kg").toLowerCase();
+      if (u.startsWith("lb")) kg = kg * 0.45359237;
+      else if (u === "g") kg = kg / 1000;
+      // "+" in the timezone arrives as a space when the link is not encoded
+      const raw = String(params.get("t") || "").trim().replace(" ", "+");
+      let t = raw ? (/^\d{10,13}$/.test(raw) ? +raw * (raw.length === 10 ? 1000 : 1) : Date.parse(raw)) : Date.now();
+      if (!isFinite(t)) t = Date.now();
+      kg = Math.round(kg * 10) / 10;
+      if (!(kg >= 20 && kg <= 300)) return { ok: false, text: `Linkdən gələn çəki (${dec(kg)} kq) mümkün aralıqda deyil, yazılmadı.` };
+      const dup = wStore.all().some((r) => Math.abs(r.t - t) < 120000 && Math.abs(r.kg - kg) < 0.05);
+      if (dup) return { ok: true, text: `Bu ölçmə artıq var: ${dec(kg)} kq (${fmtDate(t)}, ${fmtTime(t)}).` };
+      wStore.add({ kg, t, note: "Tərəzi (Sağlamlıq)" });
+      return { ok: true, text: `Tərəzidən çəki əlavə olundu: ${dec(kg)} kq (${fmtDate(t)}, ${fmtTime(t)}).` };
+    }
 
     function csv() {
       const rows = real();
@@ -1202,7 +1235,7 @@ button.confirm { color: var(--c-h2) !important; border-color: var(--c-h2) !impor
       return "Tarix;Saat;Çəki (kq);BKİ;Qeyd\n" +
         rows.map((r) => { const b = bmi(r.kg); return [fmtDate(r.t), fmtTime(r.t), dec(r.kg), b ? dec(b) : "", r.note].map(q).join(";"); }).join("\n");
     }
-    return { render, csv, real, bmi, classify, CATS, height, change, signed };
+    return { render, csv, real, bmi, classify, CATS, height, change, signed, importFromUrl };
   })();
 
   // =====================================================================
@@ -1415,6 +1448,12 @@ button.confirm { color: var(--c-h2) !important; border-color: var(--c-h2) !impor
   const NAMES = { bp: "tezyiq", glu: "seker", wt: "ceki", med: "derman", rep: "hamisi" };
   const fromHash = Object.keys(HASH).find((k) => "#" + HASH[k] === location.hash);
   let tab = fromHash || (MODS[lsGet("tz-tab", "bp")] ? lsGet("tz-tab", "bp") : "bp");
+  const params = new URLSearchParams(location.search);
+  const imported = params.has("kg") ? WT.importFromUrl(params) : null;
+  if (params.has("kg")) {
+    tab = "wt";
+    try { history.replaceState(null, "", location.pathname + "#ceki"); } catch (e) {}
+  }
   function showTab(t) {
     tab = t; lsSet("tz-tab", t);
     document.querySelectorAll(".tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === t)));
@@ -1509,6 +1548,7 @@ button.confirm { color: var(--c-h2) !important; border-color: var(--c-h2) !impor
   let rz, lastW = window.innerWidth;
   window.addEventListener("resize", () => { if (window.innerWidth === lastW) return; lastW = window.innerWidth; clearTimeout(rz); rz = setTimeout(() => MODS[tab].render(), 150); });
   showTab(tab);
+  if (imported) toolMsg(imported.text, imported.ok);
 })();
 </script>
 </body>
