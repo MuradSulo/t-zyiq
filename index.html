@@ -9,11 +9,11 @@
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Təzyiq Gündəliyi</title>
+<title>Təzyiq və Şəkər Gündəliyi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
-/* Layout: a narrow logbook column — reading entry on top, then summary, trend chart, and the log. */
+/* Layout: a narrow logbook column with two tabs (pressure, sugar) — entry on top, then summary, trend chart, and the log. */
 :root {
   --bg: #f5f6f8;
   --surface: #ffffff;
@@ -24,6 +24,7 @@
   --accent-ink: #ffffff;
   --sys: #b3263a;
   --dia: #2c5aa0;
+  --glu: #6b3fa0;
   --band: rgba(46, 140, 90, 0.10);
   --c-low: #2c74b3;
   --c-normal: #2e8c5a;
@@ -37,23 +38,25 @@
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #12141a; --surface: #1b1e26; --ink: #e9ebf0; --muted: #9aa1b2; --line: #2c303b;
-  --accent: #d0566a; --accent-ink: #12141a; --sys: #ef6b7e; --dia: #6f9fe6; --band: rgba(80, 190, 130, 0.10);
+  --accent: #d0566a; --accent-ink: #12141a; --sys: #ef6b7e; --dia: #6f9fe6; --glu: #b48ae8; --band: rgba(80, 190, 130, 0.10);
   --c-low: #6aa8e0; --c-normal: #55c08a; --c-elev: #e0b93a; --c-h1: #f0954a; --c-h2: #f06a6a; --c-crisis: #ff8fa0;
   color-scheme: dark;
 } }
 :root[data-theme="dark"] {
   --bg: #12141a; --surface: #1b1e26; --ink: #e9ebf0; --muted: #9aa1b2; --line: #2c303b;
-  --accent: #d0566a; --accent-ink: #12141a; --sys: #ef6b7e; --dia: #6f9fe6; --band: rgba(80, 190, 130, 0.10);
+  --accent: #d0566a; --accent-ink: #12141a; --sys: #ef6b7e; --dia: #6f9fe6; --glu: #b48ae8; --band: rgba(80, 190, 130, 0.10);
   --c-low: #6aa8e0; --c-normal: #55c08a; --c-elev: #e0b93a; --c-h1: #f0954a; --c-h2: #f06a6a; --c-crisis: #ff8fa0;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
 .tools { display: flex; flex-wrap: wrap; gap: 8px; }
 .wrap { max-width: 860px; margin: 0 auto; padding-block: 28px 56px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   display: flex; flex-direction: column; gap: 22px; }
+.view { display: flex; flex-direction: column; gap: 22px; }
 header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
 h1 { font-family: var(--f-display); font-weight: 700; font-size: 1.7rem; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
 h1 span { color: var(--accent); }
@@ -63,6 +66,11 @@ h1 span { color: var(--accent); }
 h2 { font-family: var(--f-display); font-weight: 500; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+
+/* tabs */
+.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.tabs button { border: 0; border-radius: 10px; padding: 11px 12px; font-family: var(--f-display); font-weight: 500; font-size: 0.92rem; background: transparent; color: var(--muted); }
+.tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
 
 /* entry form */
 form .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
@@ -96,6 +104,7 @@ button:hover { filter: brightness(0.96); }
 .stat.last { border-left: 4px solid var(--cat, var(--line)); }
 .stat.last .v { font-size: 2.1rem; }
 .stat .meta { font-size: 0.8rem; color: var(--muted); }
+.stat .pill { white-space: normal; align-self: flex-start; max-width: 100%; }
 
 /* chart */
 .chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
@@ -127,6 +136,7 @@ td.del button.confirm { color: var(--c-h2); border-color: var(--c-h2); }
 .scale div { padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--cat) 10%, transparent); border-left: 3px solid var(--cat); }
 .scale b { display: block; font-size: 0.85rem; color: var(--cat); }
 .scale span { font-family: var(--f-num); font-size: 0.82rem; color: var(--muted); }
+.scale-note { font-size: 0.82rem; color: var(--muted); margin: 0; }
 .disclaimer { font-size: 0.8rem; color: var(--muted); max-width: 70ch; }
 
 @media (max-width: 640px) {
@@ -134,18 +144,19 @@ td.del button.confirm { color: var(--c-h2); border-color: var(--c-h2); }
   form .row2 .field:first-child, form .row2 .field:last-child { grid-column: 1 / -1; }
   .summary { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .stat.last { grid-column: 1 / -1; }
+  #gForm .row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  #gForm .row .field:first-child { grid-column: 1 / -1; }
   h1 { font-size: 1.4rem; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
-
 <div class="wrap">
   <header>
     <div>
-      <div class="brand"><img src="icon.svg" alt=""><h1>Təzyiq <span>Gündəliyi</span></h1></div>
-      <p class="sub">Arterial təzyiq və nəbz ölçmələrinizi qeyd edin, dinamikanı izləyin.</p>
+      <div class="brand"><img src="icon.svg" alt=""><h1>Təzyiq <span>və Şəkər</span></h1></div>
+      <p class="sub">Təzyiq, nəbz və qanda şəkər ölçmələrinizi qeyd edin, dinamikanı izləyin.</p>
     </div>
     <div class="tools">
       <button id="exportBtn" type="button">CSV yüklə</button>
@@ -157,104 +168,188 @@ td.del button.confirm { color: var(--c-h2); border-color: var(--c-h2); }
 
   <div id="storeBanner" class="banner" data-kind="info" hidden></div>
 
-  <section class="panel" aria-labelledby="addTitle">
-    <h2 id="addTitle">Yeni ölçmə</h2>
-    <form id="form" novalidate>
-      <div class="row">
-        <div class="field">
-          <label for="sys">Sistolik <small>(yuxarı), mm Hg</small></label>
-          <input id="sys" class="big" type="number" inputmode="numeric" min="50" max="260" placeholder="120" required>
+  <div class="tabs" role="tablist" aria-label="Bölmə">
+    <button type="button" role="tab" id="tab-bp" aria-controls="view-bp" data-tab="bp">Təzyiq</button>
+    <button type="button" role="tab" id="tab-glu" aria-controls="view-glu" data-tab="glu">Şəkər</button>
+  </div>
+
+  <!-- ================= PRESSURE ================= -->
+  <div class="view" id="view-bp" role="tabpanel" aria-labelledby="tab-bp">
+    <section class="panel" aria-labelledby="addTitle">
+      <h2 id="addTitle">Yeni təzyiq ölçməsi</h2>
+      <form id="form" novalidate>
+        <div class="row">
+          <div class="field">
+            <label for="sys">Sistolik <small>(yuxarı), mm Hg</small></label>
+            <input id="sys" class="big" type="number" inputmode="numeric" min="50" max="260" placeholder="120" required>
+          </div>
+          <div class="field">
+            <label for="dia">Diastolik <small>(aşağı), mm Hg</small></label>
+            <input id="dia" class="big" type="number" inputmode="numeric" min="30" max="180" placeholder="80" required>
+          </div>
+          <div class="field">
+            <label for="pulse">Nəbz <small>(vurğu/dəq)</small></label>
+            <input id="pulse" class="big" type="number" inputmode="numeric" min="30" max="220" placeholder="72">
+          </div>
         </div>
-        <div class="field">
-          <label for="dia">Diastolik <small>(aşağı), mm Hg</small></label>
-          <input id="dia" class="big" type="number" inputmode="numeric" min="30" max="180" placeholder="80" required>
+        <div class="row2" style="margin-top:12px">
+          <div class="field">
+            <label for="when">Tarix və saat</label>
+            <input id="when" type="datetime-local">
+          </div>
+          <div class="field">
+            <label for="arm">Qol / vəziyyət</label>
+            <select id="arm">
+              <option value="Sol qol">Sol qol</option>
+              <option value="Sağ qol">Sağ qol</option>
+              <option value="Oturaq">Oturaq</option>
+              <option value="Uzanmış">Uzanmış</option>
+              <option value="Ayaq üstə">Ayaq üstə</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="note">Qeyd</label>
+            <input id="note" type="text" maxlength="140" placeholder="məs. dərmandan sonra, baş ağrısı">
+          </div>
         </div>
-        <div class="field">
-          <label for="pulse">Nəbz <small>(vurğu/dəq)</small></label>
-          <input id="pulse" class="big" type="number" inputmode="numeric" min="30" max="220" placeholder="72">
+        <div class="actions" style="margin-top:14px">
+          <button class="primary" type="submit" id="saveBtn">Yadda saxla</button>
+          <span id="preview" class="preview"></span>
+          <span id="msg" class="msg" role="status"></span>
+        </div>
+      </form>
+    </section>
+
+    <div id="sampleBanner" class="banner" hidden>Aşağıdakılar <b>nümunə</b> məlumatlardır. İlk ölçmənizi əlavə edən kimi öz göstəriciləriniz görünəcək.</div>
+
+    <section class="summary" id="summary" aria-label="Təzyiq xülasəsi"></section>
+
+    <section class="panel" aria-labelledby="chartTitle">
+      <div class="chart-head">
+        <h2 id="chartTitle">Təzyiq dinamikası</h2>
+        <div class="seg" role="group" aria-label="Dövr">
+          <button type="button" data-range="7">7 gün</button>
+          <button type="button" data-range="30">30 gün</button>
+          <button type="button" data-range="90">90 gün</button>
+          <button type="button" data-range="0">Hamısı</button>
         </div>
       </div>
-      <div class="row2" style="margin-top:12px">
-        <div class="field">
-          <label for="when">Tarix və saat</label>
-          <input id="when" type="datetime-local">
+      <div class="legend">
+        <span><i style="background:var(--sys)"></i>Sistolik</span>
+        <span><i style="background:var(--dia)"></i>Diastolik</span>
+        <span><i style="background:var(--band);height:10px"></i>Hədəf zonası (&lt;130/80)</span>
+      </div>
+      <div class="chart-box" id="chart"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="logTitle">
+      <h2 id="logTitle">Təzyiq ölçmələri</h2>
+      <div class="log" id="log"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="scaleTitle">
+      <h2 id="scaleTitle">Təzyiq təsnifatı (mm Hg)</h2>
+      <div class="scale" id="scale"></div>
+      <p class="disclaimer">Təsnifat Amerika Ürək Assosiasiyasının (AHA) meyarlarına əsaslanır və məlumat xarakterlidir. Diaqnoz və müalicə üçün həkiminizə müraciət edin. Təzyiq 180/120-dən yuxarıdırsa və sinə ağrısı, nəfəs darlığı, görmə pozğunluğu və ya danışıq çətinliyi varsa, dərhal 103-ə zəng edin.</p>
+    </section>
+  </div>
+
+  <!-- ================= SUGAR ================= -->
+  <div class="view" id="view-glu" role="tabpanel" aria-labelledby="tab-glu" hidden>
+    <section class="panel" aria-labelledby="gAddTitle">
+      <h2 id="gAddTitle">Yeni şəkər ölçməsi</h2>
+      <form id="gForm" novalidate>
+        <div class="row">
+          <div class="field">
+            <label for="gVal">Qanda şəkər, <small id="gUnitLabel">mmol/L</small></label>
+            <input id="gVal" class="big" type="text" inputmode="decimal" autocomplete="off" placeholder="5,4" required>
+          </div>
+          <div class="field">
+            <label for="gUnit">Ölçü vahidi</label>
+            <select id="gUnit">
+              <option value="mmol">mmol/L</option>
+              <option value="mg">mg/dL</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="gCtx">Nə vaxt ölçülüb</label>
+            <select id="gCtx">
+              <option value="fasting">Ac qarına (səhər)</option>
+              <option value="before">Yeməkdən əvvəl</option>
+              <option value="after">Yeməkdən sonra (2 s.)</option>
+              <option value="bedtime">Yatmazdan əvvəl</option>
+              <option value="random">Təsadüfi</option>
+            </select>
+          </div>
         </div>
-        <div class="field">
-          <label for="arm">Qol / vəziyyət</label>
-          <select id="arm">
-            <option value="Sol qol">Sol qol</option>
-            <option value="Sağ qol">Sağ qol</option>
-            <option value="Oturaq">Oturaq</option>
-            <option value="Uzanmış">Uzanmış</option>
-            <option value="Ayaq üstə">Ayaq üstə</option>
-          </select>
+        <div class="row2" style="margin-top:12px">
+          <div class="field">
+            <label for="gWhen">Tarix və saat</label>
+            <input id="gWhen" type="datetime-local">
+          </div>
+          <div class="field">
+            <label for="gMed">Dərman / insulin</label>
+            <select id="gMed">
+              <option value="">Qeyd yoxdur</option>
+              <option value="Dərman qəbul edilib">Dərman qəbul edilib</option>
+              <option value="İnsulin vurulub">İnsulin vurulub</option>
+              <option value="Dərman buraxılıb">Dərman buraxılıb</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="gNote">Qeyd</label>
+            <input id="gNote" type="text" maxlength="140" placeholder="məs. nə yemisiniz, idman">
+          </div>
         </div>
-        <div class="field">
-          <label for="note">Qeyd</label>
-          <input id="note" type="text" maxlength="140" placeholder="məs. dərmandan sonra, baş ağrısı">
+        <div class="actions" style="margin-top:14px">
+          <button class="primary" type="submit" id="gSaveBtn">Yadda saxla</button>
+          <span id="gPreview" class="preview"></span>
+          <span id="gMsg" class="msg" role="status"></span>
+        </div>
+      </form>
+    </section>
+
+    <div id="gSampleBanner" class="banner" hidden>Aşağıdakılar <b>nümunə</b> məlumatlardır. İlk şəkər ölçmənizi əlavə edən kimi öz göstəriciləriniz görünəcək.</div>
+
+    <section class="summary" id="gSummary" aria-label="Şəkər xülasəsi"></section>
+
+    <section class="panel" aria-labelledby="gChartTitle">
+      <div class="chart-head">
+        <h2 id="gChartTitle">Şəkər dinamikası</h2>
+        <div class="seg" role="group" aria-label="Dövr">
+          <button type="button" data-range="7">7 gün</button>
+          <button type="button" data-range="30">30 gün</button>
+          <button type="button" data-range="90">90 gün</button>
+          <button type="button" data-range="0">Hamısı</button>
         </div>
       </div>
-      <div class="actions" style="margin-top:14px">
-        <button class="primary" type="submit" id="saveBtn">Yadda saxla</button>
-        <span id="preview" class="preview"></span>
-        <span id="msg" class="msg" role="status"></span>
+      <div class="legend">
+        <span><i style="background:var(--glu)"></i>Şəkər</span>
+        <span><i style="background:var(--band);height:10px"></i>Hədəf aralığı (3,9–7,8 mmol/L)</span>
+        <span>Nöqtənin rəngi ölçmənin kateqoriyasıdır</span>
       </div>
-    </form>
-  </section>
+      <div class="chart-box" id="gChart"></div>
+    </section>
 
-  <div id="sampleBanner" class="banner" hidden>Aşağıdakılar <b>nümunə</b> məlumatlardır. İlk ölçmənizi əlavə edən kimi öz göstəriciləriniz görünəcək.</div>
+    <section class="panel" aria-labelledby="gLogTitle">
+      <h2 id="gLogTitle">Şəkər ölçmələri</h2>
+      <div class="log" id="gLog"></div>
+    </section>
 
-  <section class="summary" id="summary" aria-label="Xülasə"></section>
-
-  <section class="panel" aria-labelledby="chartTitle">
-    <div class="chart-head">
-      <h2 id="chartTitle">Dinamika</h2>
-      <div class="seg" role="group" aria-label="Dövr">
-        <button type="button" data-range="7">7 gün</button>
-        <button type="button" data-range="30">30 gün</button>
-        <button type="button" data-range="90">90 gün</button>
-        <button type="button" data-range="0">Hamısı</button>
-      </div>
-    </div>
-    <div class="legend">
-      <span><i style="background:var(--sys)"></i>Sistolik</span>
-      <span><i style="background:var(--dia)"></i>Diastolik</span>
-      <span><i style="background:var(--band);height:10px"></i>Hədəf zonası (&lt;130/80)</span>
-    </div>
-    <div class="chart-box" id="chart"></div>
-  </section>
-
-  <section class="panel" aria-labelledby="logTitle">
-    <h2 id="logTitle">Ölçmələr</h2>
-    <div class="log" id="log"></div>
-  </section>
-
-  <section class="panel" aria-labelledby="scaleTitle">
-    <h2 id="scaleTitle">Təsnifat (mm Hg)</h2>
-    <div class="scale" id="scale"></div>
-    <p class="disclaimer">Təsnifat Amerika Ürək Assosiasiyasının (AHA) meyarlarına əsaslanır və məlumat xarakterlidir. Diaqnoz və müalicə üçün həkiminizə müraciət edin. Təzyiq 180/120-dən yuxarıdırsa və sinə ağrısı, nəfəs darlığı, görmə pozğunluğu və ya danışıq çətinliyi varsa, dərhal 103-ə zəng edin.</p>
-  </section>
+    <section class="panel" aria-labelledby="gScaleTitle">
+      <h2 id="gScaleTitle">Şəkər təsnifatı</h2>
+      <p class="scale-note">Ac qarına və yeməkdən əvvəl:</p>
+      <div class="scale" id="gScaleFasting"></div>
+      <p class="scale-note">Yeməkdən 2 saat sonra, yatmazdan əvvəl və təsadüfi:</p>
+      <div class="scale" id="gScaleAfter"></div>
+      <p class="disclaimer">Hədlər Amerika Diabet Assosiasiyasının (ADA) diabeti olmayan böyüklər üçün meyarlarına əsaslanır və məlumat xarakterlidir. Diabetiniz varsa, fərdi hədəflərinizi həkiminiz təyin edir. Şəkər 3,0 mmol/L-dən aşağıdırsa, dərhal 15 q sürətli karbohidrat (şirə, şəkər) qəbul edin və 15 dəqiqə sonra təkrar ölçün. Huşunu itirmə, qıcolma və ya çox yüksək şəkərlə birlikdə qusma, nəfəs darlığı varsa, dərhal 103-ə zəng edin.</p>
+    </section>
+  </div>
 </div>
 
 <script>
 (function () {
-  const CATS = {
-    low:    { name: "Aşağı (hipotoniya)", color: "var(--c-low)",    range: "< 90 / < 60" },
-    normal: { name: "Normal",             color: "var(--c-normal)", range: "< 120 və < 80" },
-    elev:   { name: "Yüksəlmiş",          color: "var(--c-elev)",   range: "120–129 və < 80" },
-    h1:     { name: "Hipertoniya, 1-ci mərhələ", color: "var(--c-h1)", range: "130–139 və ya 80–89" },
-    h2:     { name: "Hipertoniya, 2-ci mərhələ", color: "var(--c-h2)", range: "≥ 140 və ya ≥ 90" },
-    crisis: { name: "Hipertonik kriz",    color: "var(--c-crisis)", range: "> 180 və/və ya > 120" },
-  };
-  function classify(s, d) {
-    if (s > 180 || d > 120) return "crisis";
-    if (s >= 140 || d >= 90) return "h2";
-    if (s >= 130 || d >= 80) return "h1";
-    if (s >= 120) return "elev";
-    if (s < 90 || d < 60) return "low";
-    return "normal";
-  }
-  const pill = (k) => `<span class="pill" style="--cat:${CATS[k].color}">${CATS[k].name}</span>`;
+  // ---------- shared ----------
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const DAY = 86400000;
@@ -262,196 +357,442 @@ td.del button.confirm { color: var(--c-h2); border-color: var(--c-h2); }
   const fmtDate = (t) => { const d = new Date(t); return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`; };
   const fmtTime = (t) => { const d = new Date(t); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
   const toLocalInput = (t) => { const d = new Date(t); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+  const pillOf = (cat) => `<span class="pill" style="--cat:${cat.color}">${cat.name}</span>`;
+  const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } };
+  function note(el, text, ok) { el.className = ok ? "msg ok" : "msg"; el.textContent = text; }
 
-  // ---- state ----
-  let readings = [];      // real data
-  let range = 30;
-  try { const r = localStorage.getItem("tz-range"); if (r !== null) range = +r; } catch (e) {}
-  let store = null;       // { add, remove }
-  let pendingDelete = null;
-
-  // Example data shown only while the log is empty.
-  function sampleData() {
-    const out = [], now = Date.now();
-    const base = [[132,86,74],[128,84,70],[135,88,77],[126,82,69],[138,89,80],[124,80,71],[129,83,73],[121,79,68],[133,85,75],[125,81,70],[119,78,66],[127,82,72],[122,79,69],[118,76,67]];
-    base.forEach(([s, d, p], i) => {
-      out.push({ id: "ex" + i, sys: s, dia: d, pulse: p, t: now - (base.length - 1 - i) * 2 * DAY - 8 * 3600000, arm: "Sol qol", note: i === 4 ? "nümunə: stresli gün" : "" });
-    });
-    return out;
-  }
-
-  // ---- stores ----
-  function localStore() {
-    const KEY = "tz-readings";
+  // localStorage-backed list of records
+  function makeStore(key) {
+    let list = [];
     let ok = true;
-    try { readings = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { ok = false; readings = []; }
-    const save = () => { try { localStorage.setItem(KEY, JSON.stringify(readings)); } catch (e) {} };
-    if (!ok) showBanner("Brauzer qeydləri saxlamağa icazə vermir (məsələn, Gizli rejim). Səhifəni bağladıqdan sonra qeydlər itəcək.");
+    try { list = JSON.parse(localStorage.getItem(key) || "[]"); } catch (e) { ok = false; }
+    if (!Array.isArray(list)) list = [];
+    const save = () => lsSet(key, JSON.stringify(list));
     return {
-      add: async (r) => { readings.push({ ...r, id: "l" + Date.now() }); save(); render(); },
-      remove: async (id) => { readings = readings.filter((r) => r.id !== id); save(); render(); },
+      ok,
+      all: () => list,
+      add: (r) => { list.push({ ...r, id: "l" + Date.now() + Math.random().toString(36).slice(2, 6) }); save(); },
+      remove: (id) => { list = list.filter((r) => r.id !== id); save(); },
+      merge: (items, keyOf) => {
+        const seen = new Set(list.map(keyOf)); let added = 0;
+        items.forEach((r) => { const k = keyOf(r); if (seen.has(k)) return; seen.add(k); list.push({ ...r, id: "l" + r.t + "-" + (++added) }); });
+        save(); return added;
+      },
     };
   }
-  function showBanner(text) { const b = $("storeBanner"); b.textContent = text; b.hidden = false; }
 
-  function init() {
-    store = localStore();
-    render();
-  }
-
-  // ---- render ----
-  function render() {
-    const real = readings.slice().sort((a, b) => a.t - b.t);
-    const isSample = real.length === 0;
-    const data = isSample ? sampleData() : real;
-    $("sampleBanner").hidden = !isSample;
-    document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.range === range)));
-    const now = Date.now();
-    const inRange = range ? data.filter((r) => r.t >= now - range * DAY) : data;
-    renderSummary(data);
-    renderChart(inRange);
-    renderLog(inRange.slice().reverse(), isSample);
-  }
-
-  function avg(list, from) {
-    const xs = list.filter((r) => r.t >= from);
-    if (!xs.length) return null;
-    const m = (k) => Math.round(xs.reduce((a, r) => a + r[k], 0) / xs.length);
-    const ps = xs.filter((r) => r.pulse);
-    return { sys: m("sys"), dia: m("dia"), pulse: ps.length ? Math.round(ps.reduce((a, r) => a + r.pulse, 0) / ps.length) : null, n: xs.length };
-  }
-
-  function renderSummary(data) {
-    const el = $("summary");
-    const last = data[data.length - 1];
-    const now = Date.now();
-    const a7 = avg(data, now - 7 * DAY), a30 = avg(data, now - 30 * DAY);
-    const avgTile = (label, a) => `<div class="stat"><span class="k">${label}</span>${a
-      ? `<span class="v">${a.sys}/${a.dia}</span><span class="meta">${a.n} ölçmə${a.pulse ? ` · nəbz ${a.pulse}` : ""}</span>${pill(classify(a.sys, a.dia))}`
-      : `<span class="v">—</span><span class="meta">bu dövrdə ölçmə yoxdur</span>`}</div>`;
-    let maxTile = `<div class="stat"><span class="k">Ən yüksək</span><span class="v">—</span></div>`;
-    if (data.length) {
-      const mx = data.reduce((a, r) => (r.sys > a.sys ? r : a), data[0]);
-      maxTile = `<div class="stat"><span class="k">Ən yüksək</span><span class="v">${mx.sys}/${mx.dia}</span><span class="meta">${fmtDate(mx.t)}, ${fmtTime(mx.t)}</span></div>`;
-    }
-    el.innerHTML = last
-      ? `<div class="stat last" style="--cat:${CATS[classify(last.sys, last.dia)].color}"><span class="k">Son ölçmə</span><span class="v">${last.sys}/${last.dia} <small>mm Hg</small></span><span class="meta">${fmtDate(last.t)}, ${fmtTime(last.t)}${last.pulse ? ` · nəbz ${last.pulse}` : ""}</span>${pill(classify(last.sys, last.dia))}</div>`
-        + avgTile("7 günlük orta", a7) + avgTile("30 günlük orta", a30) + maxTile
-      : "";
-  }
-
-  function renderChart(list) {
-    const el = $("chart");
-    if (list.length < 2) { el.innerHTML = `<p class="empty">Qrafik üçün bu dövrdə ən azı 2 ölçmə lazımdır.</p>`; return; }
+  // common SVG frame for time charts
+  function timeFrame(el, list, yLo, yHi, step) {
     const W = Math.max(520, el.clientWidth || 800), H = 260, L = 38, R = 14, T = 12, B = 28;
     const t0 = list[0].t, t1 = list[list.length - 1].t, span = Math.max(t1 - t0, 1);
-    const lo = Math.min(50, ...list.map((r) => r.dia)) , hi = Math.max(170, ...list.map((r) => r.sys));
-    const yMin = Math.floor(lo / 10) * 10, yMax = Math.ceil(hi / 10) * 10;
     const x = (t) => L + ((t - t0) / span) * (W - L - R);
-    const y = (v) => T + (1 - (v - yMin) / (yMax - yMin)) * (H - T - B);
-    let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="Təzyiq dinamikası qrafiki">`;
-    // target band 80..130 is drawn between diastolic target and systolic target lines
-    s += `<rect x="${L}" y="${y(130)}" width="${W - L - R}" height="${y(80) - y(130)}" fill="var(--band)"></rect>`;
-    for (let v = yMin; v <= yMax; v += 20) {
-      s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"></line>`;
-      s += `<text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+    const y = (v) => T + (1 - (v - yLo) / (yHi - yLo)) * (H - T - B);
+    let grid = "";
+    for (let v = yLo; v <= yHi + 1e-9; v += step) {
+      const lbl = Number.isInteger(v) ? v : v.toFixed(1).replace(".", ",");
+      grid += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"></line>`;
+      grid += `<text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${lbl}</text>`;
     }
-    [[140, "var(--c-h2)"], [90, "var(--c-h2)"]].forEach(([v, c]) => {
-      if (v > yMin && v < yMax) s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="${c}" stroke-dasharray="4 4" stroke-width="1" opacity="0.6"></line>`;
-    });
     const ticks = Math.min(6, list.length);
     for (let i = 0; i < ticks; i++) {
       const t = t0 + (span * i) / (ticks - 1);
       const d = new Date(t);
-      s += `<text x="${x(t)}" y="${H - 8}" text-anchor="${i === 0 ? "start" : i === ticks - 1 ? "end" : "middle"}">${pad(d.getDate())}.${pad(d.getMonth() + 1)}</text>`;
+      grid += `<text x="${x(t)}" y="${H - 8}" text-anchor="${i === 0 ? "start" : i === ticks - 1 ? "end" : "middle"}">${pad(d.getDate())}.${pad(d.getMonth() + 1)}</text>`;
     }
-    const line = (k, c) => {
-      const pts = list.map((r) => `${x(r.t).toFixed(1)},${y(r[k]).toFixed(1)}`).join(" ");
-      let out = `<polyline points="${pts}" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>`;
-      list.forEach((r, i) => {
-        const lastPt = i === list.length - 1;
-        out += `<circle cx="${x(r.t).toFixed(1)}" cy="${y(r[k]).toFixed(1)}" r="${lastPt ? 4.5 : 2.5}" fill="${c}" stroke="var(--surface)" stroke-width="${lastPt ? 2 : 0}"><title>${fmtDate(r.t)} ${fmtTime(r.t)} — ${r.sys}/${r.dia}</title></circle>`;
+    return { W, H, L, R, x, y, grid };
+  }
+
+  // delete with inline confirmation
+  function wireDelete(container, getPending, setPending, remove, rerender) {
+    let timer = null;
+    container.addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-del]"); if (!b) return;
+      const id = b.dataset.del;
+      if (getPending() !== id) {
+        setPending(id); rerender();
+        clearTimeout(timer); timer = setTimeout(() => { setPending(null); rerender(); }, 4000);
+        return;
+      }
+      setPending(null); clearTimeout(timer);
+      remove(id); rerender();
+    });
+  }
+  const delCell = (r, isSample, pending) => isSample ? "" :
+    `<button type="button" data-del="${esc(r.id)}" class="${pending === r.id ? "confirm" : ""}">${pending === r.id ? "Təsdiqlə" : "Sil"}</button>`;
+
+  function wireRange(view, get, set) {
+    view.querySelector(".seg").addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-range]"); if (!b) return;
+      set(+b.dataset.range);
+    });
+    view.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.range === get())));
+  }
+  const markRange = (view, range) => view.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.range === range)));
+
+  const bpStore = makeStore("tz-readings");
+  const gStore = makeStore("tz-glucose");
+  if (!bpStore.ok || !lsSet("tz-probe", "1")) {
+    const b = $("storeBanner");
+    b.textContent = "Brauzer qeydləri saxlamağa icazə vermir (məsələn, Gizli rejim). Səhifəni bağladıqdan sonra qeydlər itəcək.";
+    b.hidden = false;
+  }
+
+  // =====================================================================
+  // PRESSURE
+  // =====================================================================
+  const BP = (function () {
+    const CATS = {
+      low:    { name: "Aşağı (hipotoniya)", color: "var(--c-low)",    range: "< 90 / < 60" },
+      normal: { name: "Normal",             color: "var(--c-normal)", range: "< 120 və < 80" },
+      elev:   { name: "Yüksəlmiş",          color: "var(--c-elev)",   range: "120–129 və < 80" },
+      h1:     { name: "Hipertoniya, 1-ci mərhələ", color: "var(--c-h1)", range: "130–139 və ya 80–89" },
+      h2:     { name: "Hipertoniya, 2-ci mərhələ", color: "var(--c-h2)", range: "≥ 140 və ya ≥ 90" },
+      crisis: { name: "Hipertonik kriz",    color: "var(--c-crisis)", range: "> 180 və/və ya > 120" },
+    };
+    function classify(s, d) {
+      if (s > 180 || d > 120) return "crisis";
+      if (s >= 140 || d >= 90) return "h2";
+      if (s >= 130 || d >= 80) return "h1";
+      if (s >= 120) return "elev";
+      if (s < 90 || d < 60) return "low";
+      return "normal";
+    }
+    const pill = (k) => pillOf(CATS[k]);
+    const view = $("view-bp");
+    let range = +lsGet("tz-range", "30");
+    let pendingDelete = null;
+
+    function sampleData() {
+      const out = [], now = Date.now();
+      const base = [[132,86,74],[128,84,70],[135,88,77],[126,82,69],[138,89,80],[124,80,71],[129,83,73],[121,79,68],[133,85,75],[125,81,70],[119,78,66],[127,82,72],[122,79,69],[118,76,67]];
+      base.forEach(([s, d, p], i) => {
+        out.push({ id: "ex" + i, sys: s, dia: d, pulse: p, t: now - (base.length - 1 - i) * 2 * DAY - 8 * 3600000, arm: "Sol qol", note: i === 4 ? "nümunə: stresli gün" : "" });
       });
       return out;
-    };
-    s += line("sys", "var(--sys)") + line("dia", "var(--dia)") + `</svg>`;
-    el.innerHTML = s;
-  }
+    }
 
-  function renderLog(list, isSample) {
-    const el = $("log");
-    if (!list.length) { el.innerHTML = `<p class="empty">Bu dövrdə ölçmə yoxdur.</p>`; return; }
-    el.innerHTML = `<table><thead><tr><th>Tarix</th><th>Təzyiq</th><th>Nəbz</th><th>Vəziyyət</th><th>Qeyd</th><th></th></tr></thead><tbody>${
-      list.map((r) => `<tr>
-        <td class="when">${fmtDate(r.t)}<br>${fmtTime(r.t)}</td>
-        <td class="bp">${r.sys}/${r.dia}</td>
-        <td class="num">${r.pulse || "—"}</td>
-        <td>${pill(classify(r.sys, r.dia))}<div class="preview">${esc(r.arm)}</div></td>
-        <td class="note">${esc(r.note)}</td>
-        <td class="del">${isSample ? "" : `<button type="button" data-del="${esc(r.id)}" class="${pendingDelete === r.id ? "confirm" : ""}">${pendingDelete === r.id ? "Təsdiqlə" : "Sil"}</button>`}</td>
-      </tr>`).join("")}</tbody></table>`;
-  }
+    function render() {
+      const real = bpStore.all().slice().sort((a, b) => a.t - b.t);
+      const isSample = real.length === 0;
+      const data = isSample ? sampleData() : real;
+      $("sampleBanner").hidden = !isSample;
+      markRange(view, range);
+      const now = Date.now();
+      const inRange = range ? data.filter((r) => r.t >= now - range * DAY) : data;
+      renderSummary(data);
+      renderChart(inRange);
+      renderLog(inRange.slice().reverse(), isSample);
+    }
 
-  function renderScale() {
+    function avg(list, from) {
+      const xs = list.filter((r) => r.t >= from);
+      if (!xs.length) return null;
+      const m = (k) => Math.round(xs.reduce((a, r) => a + r[k], 0) / xs.length);
+      const ps = xs.filter((r) => r.pulse);
+      return { sys: m("sys"), dia: m("dia"), pulse: ps.length ? Math.round(ps.reduce((a, r) => a + r.pulse, 0) / ps.length) : null, n: xs.length };
+    }
+
+    function renderSummary(data) {
+      const last = data[data.length - 1];
+      const now = Date.now();
+      const a7 = avg(data, now - 7 * DAY), a30 = avg(data, now - 30 * DAY);
+      const avgTile = (label, a) => `<div class="stat"><span class="k">${label}</span>${a
+        ? `<span class="v">${a.sys}/${a.dia}</span><span class="meta">${a.n} ölçmə${a.pulse ? ` · nəbz ${a.pulse}` : ""}</span>${pill(classify(a.sys, a.dia))}`
+        : `<span class="v">—</span><span class="meta">bu dövrdə ölçmə yoxdur</span>`}</div>`;
+      const mx = data.reduce((a, r) => (r.sys > a.sys ? r : a), data[0]);
+      $("summary").innerHTML =
+        `<div class="stat last" style="--cat:${CATS[classify(last.sys, last.dia)].color}"><span class="k">Son ölçmə</span><span class="v">${last.sys}/${last.dia} <small>mm Hg</small></span><span class="meta">${fmtDate(last.t)}, ${fmtTime(last.t)}${last.pulse ? ` · nəbz ${last.pulse}` : ""}</span>${pill(classify(last.sys, last.dia))}</div>`
+        + avgTile("7 günlük orta", a7) + avgTile("30 günlük orta", a30)
+        + `<div class="stat"><span class="k">Ən yüksək</span><span class="v">${mx.sys}/${mx.dia}</span><span class="meta">${fmtDate(mx.t)}, ${fmtTime(mx.t)}</span></div>`;
+    }
+
+    function renderChart(list) {
+      const el = $("chart");
+      if (list.length < 2) { el.innerHTML = `<p class="empty">Qrafik üçün bu dövrdə ən azı 2 ölçmə lazımdır.</p>`; return; }
+      const lo = Math.min(50, ...list.map((r) => r.dia)), hi = Math.max(170, ...list.map((r) => r.sys));
+      const yMin = Math.floor(lo / 20) * 20, yMax = Math.ceil(hi / 20) * 20;
+      const f = timeFrame(el, list, yMin, yMax, 20);
+      const { x, y } = f;
+      let s = `<svg viewBox="0 0 ${f.W} ${f.H}" width="100%" height="${f.H}" role="img" aria-label="Təzyiq dinamikası qrafiki">`;
+      s += `<rect x="${f.L}" y="${y(130)}" width="${f.W - f.L - f.R}" height="${y(80) - y(130)}" fill="var(--band)"></rect>` + f.grid;
+      [140, 90].forEach((v) => {
+        if (v > yMin && v < yMax) s += `<line x1="${f.L}" x2="${f.W - f.R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--c-h2)" stroke-dasharray="4 4" stroke-width="1" opacity="0.6"></line>`;
+      });
+      const line = (k, c) => {
+        const pts = list.map((r) => `${x(r.t).toFixed(1)},${y(r[k]).toFixed(1)}`).join(" ");
+        let out = `<polyline points="${pts}" fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>`;
+        list.forEach((r, i) => {
+          const lastPt = i === list.length - 1;
+          out += `<circle cx="${x(r.t).toFixed(1)}" cy="${y(r[k]).toFixed(1)}" r="${lastPt ? 4.5 : 2.5}" fill="${c}" stroke="var(--surface)" stroke-width="${lastPt ? 2 : 0}"><title>${fmtDate(r.t)} ${fmtTime(r.t)} — ${r.sys}/${r.dia}</title></circle>`;
+        });
+        return out;
+      };
+      el.innerHTML = s + line("sys", "var(--sys)") + line("dia", "var(--dia)") + `</svg>`;
+    }
+
+    function renderLog(list, isSample) {
+      const el = $("log");
+      if (!list.length) { el.innerHTML = `<p class="empty">Bu dövrdə ölçmə yoxdur.</p>`; return; }
+      el.innerHTML = `<table><thead><tr><th>Tarix</th><th>Təzyiq</th><th>Nəbz</th><th>Vəziyyət</th><th>Qeyd</th><th></th></tr></thead><tbody>${
+        list.map((r) => `<tr>
+          <td class="when">${fmtDate(r.t)}<br>${fmtTime(r.t)}</td>
+          <td class="bp">${r.sys}/${r.dia}</td>
+          <td class="num">${r.pulse || "—"}</td>
+          <td>${pill(classify(r.sys, r.dia))}<div class="preview">${esc(r.arm)}</div></td>
+          <td class="note">${esc(r.note)}</td>
+          <td class="del">${delCell(r, isSample, pendingDelete)}</td>
+        </tr>`).join("")}</tbody></table>`;
+    }
+
     $("scale").innerHTML = ["low", "normal", "elev", "h1", "h2", "crisis"].map((k) =>
       `<div style="--cat:${CATS[k].color}"><b>${CATS[k].name}</b><span>${CATS[k].range}</span></div>`).join("");
-  }
 
-  // ---- interactions ----
-  const form = $("form");
-  $("when").value = toLocalInput(Date.now());
-  function livePreview() {
-    const s = +$("sys").value, d = +$("dia").value;
-    $("preview").innerHTML = s && d ? pill(classify(s, d)) : "";
-  }
-  $("sys").addEventListener("input", livePreview);
-  $("dia").addEventListener("input", livePreview);
+    $("when").value = toLocalInput(Date.now());
+    function livePreview() {
+      const s = +$("sys").value, d = +$("dia").value;
+      $("preview").innerHTML = s && d ? pill(classify(s, d)) : "";
+    }
+    $("sys").addEventListener("input", livePreview);
+    $("dia").addEventListener("input", livePreview);
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const msg = $("msg"); msg.className = "msg"; msg.textContent = "";
-    const sys = parseInt($("sys").value, 10), dia = parseInt($("dia").value, 10);
-    const pulse = $("pulse").value ? parseInt($("pulse").value, 10) : null;
-    if (!(sys >= 50 && sys <= 260)) { msg.textContent = "Sistolik təzyiqi 50–260 aralığında daxil edin."; $("sys").focus(); return; }
-    if (!(dia >= 30 && dia <= 180)) { msg.textContent = "Diastolik təzyiqi 30–180 aralığında daxil edin."; $("dia").focus(); return; }
-    if (dia >= sys) { msg.textContent = "Diastolik (aşağı) göstərici sistolikdən kiçik olmalıdır."; $("dia").focus(); return; }
-    if (pulse !== null && !(pulse >= 30 && pulse <= 220)) { msg.textContent = "Nəbzi 30–220 aralığında daxil edin və ya boş saxlayın."; $("pulse").focus(); return; }
-    const t = $("when").value ? new Date($("when").value).getTime() : Date.now();
-    if (!store) { msg.textContent = "Bir az gözləyin, yaddaş hələ hazır deyil."; return; }
-    $("saveBtn").disabled = true;
-    try {
-      await store.add({ sys, dia, pulse, t, arm: $("arm").value, note: $("note").value.trim() });
-      msg.className = "msg ok";
-      msg.textContent = classify(sys, dia) === "crisis" ? "" : "Yadda saxlanıldı.";
-      if (classify(sys, dia) === "crisis") { msg.className = "msg"; msg.textContent = "Yadda saxlanıldı. Bu göstərici çox yüksəkdir: 5 dəqiqə sonra təkrar ölçün; simptomlar varsa, 103-ə zəng edin."; }
+    $("form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const msg = $("msg"); note(msg, "");
+      const sys = parseInt($("sys").value, 10), dia = parseInt($("dia").value, 10);
+      const pulse = $("pulse").value ? parseInt($("pulse").value, 10) : null;
+      if (!(sys >= 50 && sys <= 260)) { note(msg, "Sistolik təzyiqi 50–260 aralığında daxil edin."); $("sys").focus(); return; }
+      if (!(dia >= 30 && dia <= 180)) { note(msg, "Diastolik təzyiqi 30–180 aralığında daxil edin."); $("dia").focus(); return; }
+      if (dia >= sys) { note(msg, "Diastolik (aşağı) göstərici sistolikdən kiçik olmalıdır."); $("dia").focus(); return; }
+      if (pulse !== null && !(pulse >= 30 && pulse <= 220)) { note(msg, "Nəbzi 30–220 aralığında daxil edin və ya boş saxlayın."); $("pulse").focus(); return; }
+      const t = $("when").value ? new Date($("when").value).getTime() : Date.now();
+      bpStore.add({ sys, dia, pulse, t, arm: $("arm").value, note: $("note").value.trim() });
+      if (classify(sys, dia) === "crisis") note(msg, "Yadda saxlanıldı. Bu göstərici çox yüksəkdir: 5 dəqiqə sonra təkrar ölçün; simptomlar varsa, 103-ə zəng edin.");
+      else note(msg, "Yadda saxlanıldı.", true);
       ["sys", "dia", "pulse", "note"].forEach((id) => ($(id).value = ""));
       $("when").value = toLocalInput(Date.now());
       livePreview();
-    } catch (err) {
-      msg.textContent = err && err.code === "not_granted"
-        ? "Bu artefakta yazmaq icazəniz yoxdur."
-        : "Yadda saxlamaq alınmadı. İnternet bağlantısını yoxlayıb yenidən cəhd edin.";
-    } finally { $("saveBtn").disabled = false; }
-  });
+      render();
+    });
 
-  document.querySelector(".seg").addEventListener("click", (e) => {
-    const b = e.target.closest("button[data-range]"); if (!b) return;
-    range = +b.dataset.range;
-    try { localStorage.setItem("tz-range", String(range)); } catch (err) {}
-    render();
-  });
+    wireRange(view, () => range, (r) => { range = r; lsSet("tz-range", String(r)); render(); });
+    wireDelete($("log"), () => pendingDelete, (v) => (pendingDelete = v), (id) => bpStore.remove(id), render);
 
-  let delTimer = null;
-  $("log").addEventListener("click", async (e) => {
-    const b = e.target.closest("button[data-del]"); if (!b) return;
-    const id = b.dataset.del;
-    if (pendingDelete !== id) {
-      pendingDelete = id; render();
-      clearTimeout(delTimer); delTimer = setTimeout(() => { pendingDelete = null; render(); }, 4000);
-      return;
+    function csv() {
+      const rows = bpStore.all().slice().sort((a, b) => a.t - b.t);
+      if (!rows.length) return null;
+      const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      return "﻿Tarix;Saat;Sistolik;Diastolik;Nəbz;Kateqoriya;Vəziyyət;Qeyd\n" +
+        rows.map((r) => [fmtDate(r.t), fmtTime(r.t), r.sys, r.dia, r.pulse ?? "", CATS[classify(r.sys, r.dia)].name, r.arm, r.note].map(q).join(";")).join("\n");
     }
-    pendingDelete = null; clearTimeout(delTimer);
-    try { await store.remove(id); } catch (err) { $("msg").className = "msg"; $("msg").textContent = "Silmək alınmadı, yenidən cəhd edin."; }
+    return { render, csv };
+  })();
+
+  // =====================================================================
+  // SUGAR  (stored in mmol/L; mg/dL = mmol/L × 18)
+  // =====================================================================
+  const GLU = (function () {
+    const MG = 18;
+    const CTX = { fasting: "Ac qarına", before: "Yeməkdən əvvəl", after: "Yeməkdən 2 saat sonra", bedtime: "Yatmazdan əvvəl", random: "Təsadüfi" };
+    const CATS = {
+      vlow:  { name: "Çox aşağı",        color: "var(--c-crisis)" },
+      low:   { name: "Aşağı (hipoqlikemiya)", color: "var(--c-low)" },
+      normal:{ name: "Normal",           color: "var(--c-normal)" },
+      pre:   { name: "Sərhəd (prediabet)", color: "var(--c-elev)" },
+      high:  { name: "Yüksək",           color: "var(--c-h2)" },
+      vhigh: { name: "Çox yüksək",       color: "var(--c-crisis)" },
+    };
+    // upper bounds for normal / prediabetes by context group
+    const LIMITS = { fasting: [5.6, 7.0], after: [7.8, 11.1] };
+    const group = (ctx) => (ctx === "fasting" || ctx === "before") ? "fasting" : "after";
+    function classify(v, ctx) {
+      if (v < 3.0) return "vlow";
+      if (v < 3.9) return "low";
+      if (v >= 13.9) return "vhigh";
+      const [n, p] = LIMITS[group(ctx)];
+      if (v < n) return "normal";
+      if (v < p) return "pre";
+      return "high";
+    }
+    const pill = (v, ctx) => pillOf(CATS[classify(v, ctx)]);
+    const view = $("view-glu");
+    let unit = lsGet("tz-gunit", "mmol") === "mg" ? "mg" : "mmol";
+    let range = +lsGet("tz-grange", "30");
+    let pendingDelete = null;
+
+    const show = (v) => unit === "mg" ? String(Math.round(v * MG)) : v.toFixed(1).replace(".", ",");
+    const unitName = () => unit === "mg" ? "mg/dL" : "mmol/L";
+    const parseInput = (s) => { const n = parseFloat(String(s).replace(",", ".").trim()); return isFinite(n) ? n : NaN; };
+    const toMmol = (n) => unit === "mg" ? n / MG : n;
+
+    function sampleData() {
+      const now = Date.now(), out = [];
+      const seq = [["fasting",5.8],["after",8.4],["fasting",6.1],["after",7.6],["bedtime",6.9],["fasting",5.5],["after",9.2],["fasting",6.3],["before",5.9],["after",7.1],["fasting",5.4],["after",8.0],["fasting",5.9],["after",7.3]];
+      seq.forEach(([c, v], i) => {
+        const d = new Date(now - (6 - Math.floor(i / 2)) * DAY);
+        d.setHours(c === "fasting" ? 7 : c === "bedtime" ? 22 : 14, c === "fasting" ? 30 : 0, 0, 0);
+        out.push({ id: "gex" + i, v, ctx: c, t: Math.min(d.getTime(), now - 60000), med: "", note: i === 6 ? "nümunə: plov" : "" });
+      });
+      return out.sort((a, b) => a.t - b.t);
+    }
+
+    function render() {
+      $("gUnit").value = unit;
+      $("gUnitLabel").textContent = unitName();
+      $("gVal").placeholder = unit === "mg" ? "97" : "5,4";
+      const real = gStore.all().slice().sort((a, b) => a.t - b.t);
+      const isSample = real.length === 0;
+      const data = isSample ? sampleData() : real;
+      $("gSampleBanner").hidden = !isSample;
+      markRange(view, range);
+      const now = Date.now();
+      const inRange = range ? data.filter((r) => r.t >= now - range * DAY) : data;
+      renderSummary(data);
+      renderChart(inRange);
+      renderLog(inRange.slice().reverse(), isSample);
+      renderScale();
+      livePreview();
+    }
+
+    function renderSummary(data) {
+      const now = Date.now();
+      const last = data[data.length - 1];
+      const mean = (xs) => xs.reduce((a, r) => a + r.v, 0) / xs.length;
+      const in7 = data.filter((r) => r.t >= now - 7 * DAY);
+      const fast7 = in7.filter((r) => r.ctx === "fasting");
+      const in30 = data.filter((r) => r.t >= now - 30 * DAY);
+      const ok30 = in30.filter((r) => classify(r.v, r.ctx) === "normal").length;
+      const low30 = in30.filter((r) => r.v < 3.9).length;
+      const tile = (k, v, meta, extra = "") => `<div class="stat"><span class="k">${k}</span><span class="v">${v}</span><span class="meta">${meta}</span>${extra}</div>`;
+      $("gSummary").innerHTML =
+        `<div class="stat last" style="--cat:${CATS[classify(last.v, last.ctx)].color}"><span class="k">Son ölçmə</span><span class="v">${show(last.v)} <small>${unitName()}</small></span><span class="meta">${fmtDate(last.t)}, ${fmtTime(last.t)} · ${CTX[last.ctx]}</span>${pill(last.v, last.ctx)}</div>`
+        + (fast7.length
+          ? tile("Ac qarına, 7 günlük orta", show(mean(fast7)), `${fast7.length} ölçmə`, pill(mean(fast7), "fasting"))
+          : tile("Ac qarına, 7 günlük orta", "—", "bu dövrdə ac qarına ölçmə yoxdur"))
+        + (in7.length ? tile("7 günlük orta (hamısı)", show(mean(in7)), `${in7.length} ölçmə`) : tile("7 günlük orta (hamısı)", "—", "bu dövrdə ölçmə yoxdur"))
+        + (in30.length
+          ? tile("Normal aralıqda, 30 gün", `${Math.round((ok30 / in30.length) * 100)}%`, `${ok30} / ${in30.length} ölçmə${low30 ? ` · ${low30} dəfə aşağı` : ""}`)
+          : tile("Normal aralıqda, 30 gün", "—", "bu dövrdə ölçmə yoxdur"));
+    }
+
+    function renderChart(list) {
+      const el = $("gChart");
+      if (list.length < 2) { el.innerHTML = `<p class="empty">Qrafik üçün bu dövrdə ən azı 2 ölçmə lazımdır.</p>`; return; }
+      // chart is drawn in the selected unit
+      const k = unit === "mg" ? MG : 1;
+      const step = unit === "mg" ? 50 : 2;
+      const lo = Math.min(3 * k, ...list.map((r) => r.v * k)), hi = Math.max(12 * k, ...list.map((r) => r.v * k));
+      const yMin = Math.max(0, Math.floor(lo / step) * step), yMax = Math.ceil(hi / step) * step;
+      const f = timeFrame(el, list, yMin, yMax, step);
+      const { x, y } = f;
+      let s = `<svg viewBox="0 0 ${f.W} ${f.H}" width="100%" height="${f.H}" role="img" aria-label="Şəkər dinamikası qrafiki">`;
+      s += `<rect x="${f.L}" y="${y(7.8 * k)}" width="${f.W - f.L - f.R}" height="${y(3.9 * k) - y(7.8 * k)}" fill="var(--band)"></rect>` + f.grid;
+      [[3.9, "var(--c-low)"], [11.1, "var(--c-h2)"]].forEach(([v, c]) => {
+        if (v * k > yMin && v * k < yMax) s += `<line x1="${f.L}" x2="${f.W - f.R}" y1="${y(v * k)}" y2="${y(v * k)}" stroke="${c}" stroke-dasharray="4 4" stroke-width="1" opacity="0.6"></line>`;
+      });
+      const pts = list.map((r) => `${x(r.t).toFixed(1)},${y(r.v * k).toFixed(1)}`).join(" ");
+      s += `<polyline points="${pts}" fill="none" stroke="var(--glu)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="0.75"></polyline>`;
+      list.forEach((r, i) => {
+        const lastPt = i === list.length - 1;
+        s += `<circle cx="${x(r.t).toFixed(1)}" cy="${y(r.v * k).toFixed(1)}" r="${lastPt ? 5.5 : 4}" fill="${CATS[classify(r.v, r.ctx)].color}" stroke="var(--surface)" stroke-width="1.5"><title>${fmtDate(r.t)} ${fmtTime(r.t)} — ${show(r.v)} ${unitName()} (${CTX[r.ctx]})</title></circle>`;
+      });
+      el.innerHTML = s + `</svg>`;
+    }
+
+    function renderLog(list, isSample) {
+      const el = $("gLog");
+      if (!list.length) { el.innerHTML = `<p class="empty">Bu dövrdə ölçmə yoxdur.</p>`; return; }
+      el.innerHTML = `<table><thead><tr><th>Tarix</th><th>Şəkər, ${unitName()}</th><th>Nə vaxt</th><th>Kateqoriya</th><th>Qeyd</th><th></th></tr></thead><tbody>${
+        list.map((r) => `<tr>
+          <td class="when">${fmtDate(r.t)}<br>${fmtTime(r.t)}</td>
+          <td class="bp">${show(r.v)}</td>
+          <td>${CTX[r.ctx]}</td>
+          <td>${pill(r.v, r.ctx)}</td>
+          <td class="note">${esc([r.med, r.note].filter(Boolean).join(" · "))}</td>
+          <td class="del">${delCell(r, isSample, pendingDelete)}</td>
+        </tr>`).join("")}</tbody></table>`;
+    }
+
+    function renderScale() {
+      const u = unitName();
+      const box = (k, txt) => `<div style="--cat:${CATS[k].color}"><b>${CATS[k].name}</b><span>${txt}</span></div>`;
+      const mk = (n, p) => [
+        box("low", `< ${show(3.9)} ${u}`),
+        box("normal", `${show(3.9)} – ${show(n - 0.1)}`),
+        box("pre", `${show(n)} – ${show(p - 0.1)}`),
+        box("high", `≥ ${show(p)}`),
+      ].join("");
+      $("gScaleFasting").innerHTML = mk(5.6, 7.0);
+      $("gScaleAfter").innerHTML = mk(7.8, 11.1);
+    }
+
+    $("gWhen").value = toLocalInput(Date.now());
+    // pre-select the likely context from the hour of day
+    const h = new Date().getHours();
+    $("gCtx").value = h >= 5 && h < 10 ? "fasting" : h >= 21 || h < 2 ? "bedtime" : "after";
+
+    function livePreview() {
+      const n = parseInput($("gVal").value);
+      $("gPreview").innerHTML = n > 0 ? pill(toMmol(n), $("gCtx").value) : "";
+    }
+    $("gVal").addEventListener("input", livePreview);
+    $("gCtx").addEventListener("change", livePreview);
+    $("gUnit").addEventListener("change", () => {
+      const n = parseInput($("gVal").value);
+      const prev = unit;
+      unit = $("gUnit").value; lsSet("tz-gunit", unit);
+      if (n > 0 && prev !== unit) $("gVal").value = unit === "mg" ? String(Math.round(n * MG)) : (n / MG).toFixed(1).replace(".", ",");
+      render();
+    });
+
+    $("gForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const msg = $("gMsg"); note(msg, "");
+      const n = parseInput($("gVal").value);
+      const v = toMmol(n);
+      if (!(v >= 1 && v <= 35)) {
+        note(msg, unit === "mg" ? "Şəkəri 18–630 mg/dL aralığında daxil edin." : "Şəkəri 1,0–35,0 mmol/L aralığında daxil edin (məs. 5,4).");
+        $("gVal").focus(); return;
+      }
+      const t = $("gWhen").value ? new Date($("gWhen").value).getTime() : Date.now();
+      const ctx = $("gCtx").value;
+      gStore.add({ v: Math.round(v * 100) / 100, ctx, t, med: $("gMed").value, note: $("gNote").value.trim() });
+      const c = classify(v, ctx);
+      if (c === "vlow" || c === "low") note(msg, "Yadda saxlanıldı. Şəkər aşağıdır: 15 q sürətli karbohidrat (şirə, şəkər) qəbul edin və 15 dəqiqə sonra təkrar ölçün.");
+      else if (c === "vhigh") note(msg, "Yadda saxlanıldı. Şəkər çox yüksəkdir: həkiminizlə əlaqə saxlayın; qusma və ya nəfəs darlığı varsa, 103-ə zəng edin.");
+      else note(msg, "Yadda saxlanıldı.", true);
+      ["gVal", "gNote"].forEach((id) => ($(id).value = ""));
+      $("gMed").value = "";
+      $("gWhen").value = toLocalInput(Date.now());
+      render();
+    });
+
+    wireRange(view, () => range, (r) => { range = r; lsSet("tz-grange", String(r)); render(); });
+    wireDelete($("gLog"), () => pendingDelete, (v) => (pendingDelete = v), (id) => gStore.remove(id), render);
+
+    function csv() {
+      const rows = gStore.all().slice().sort((a, b) => a.t - b.t);
+      if (!rows.length) return null;
+      const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      return "﻿Tarix;Saat;Şəkər (mmol/L);Şəkər (mg/dL);Nə vaxt;Kateqoriya;Dərman;Qeyd\n" +
+        rows.map((r) => [fmtDate(r.t), fmtTime(r.t), r.v.toFixed(1).replace(".", ","), Math.round(r.v * MG), CTX[r.ctx], CATS[classify(r.v, r.ctx)].name, r.med, r.note].map(q).join(";")).join("\n");
+    }
+    return { render, csv };
+  })();
+
+  // =====================================================================
+  // tabs, export, backup
+  // =====================================================================
+  let tab = location.hash === "#seker" ? "glu" : location.hash === "#tezyiq" ? "bp" : (lsGet("tz-tab", "bp") === "glu" ? "glu" : "bp");
+  function showTab(t) {
+    tab = t; lsSet("tz-tab", t);
+    document.querySelectorAll(".tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === t)));
+    $("view-bp").hidden = t !== "bp";
+    $("view-glu").hidden = t !== "glu";
+    (t === "bp" ? BP : GLU).render();
+  }
+  document.querySelector(".tabs").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-tab]"); if (b) showTab(b.dataset.tab);
   });
 
   function saveFile(name, text, type) {
@@ -461,19 +802,17 @@ td.del button.confirm { color: var(--c-h2); border-color: var(--c-h2); }
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   }
-  function note(text, ok) { const m = $("msg"); m.className = ok ? "msg ok" : "msg"; m.textContent = text; }
+  const curMsg = () => $(tab === "bp" ? "msg" : "gMsg");
 
   $("exportBtn").onclick = () => {
-    const rows = readings.slice().sort((a, b) => a.t - b.t);
-    if (!rows.length) return note("Yükləmək üçün hələ ölçmə yoxdur.");
-    const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const csv = "﻿Tarix;Saat;Sistolik;Diastolik;Nəbz;Kateqoriya;Vəziyyət;Qeyd\n" +
-      rows.map((r) => [fmtDate(r.t), fmtTime(r.t), r.sys, r.dia, r.pulse ?? "", CATS[classify(r.sys, r.dia)].name, r.arm, r.note].map(q).join(";")).join("\n");
-    saveFile(`tezyiq-${fmtDate(Date.now())}.csv`, csv, "text/csv;charset=utf-8");
+    const text = (tab === "bp" ? BP : GLU).csv();
+    if (!text) return note(curMsg(), "Yükləmək üçün bu bölmədə hələ ölçmə yoxdur.");
+    saveFile(`${tab === "bp" ? "tezyiq" : "seker"}-${fmtDate(Date.now())}.csv`, text, "text/csv;charset=utf-8");
   };
   $("backupBtn").onclick = () => {
-    if (!readings.length) return note("Ehtiyat nüsxə üçün hələ ölçmə yoxdur.");
-    saveFile(`tezyiq-ehtiyat-${fmtDate(Date.now())}.json`, JSON.stringify({ app: "tezyiq-gundeliyi", v: 1, readings }, null, 1), "application/json");
+    if (!bpStore.all().length && !gStore.all().length) return note(curMsg(), "Ehtiyat nüsxə üçün hələ ölçmə yoxdur.");
+    saveFile(`tezyiq-ehtiyat-${fmtDate(Date.now())}.json`,
+      JSON.stringify({ app: "tezyiq-gundeliyi", v: 2, readings: bpStore.all(), glucose: gStore.all() }, null, 1), "application/json");
   };
   $("restoreBtn").onclick = () => $("restoreFile").click();
   $("restoreFile").onchange = async (e) => {
@@ -481,24 +820,20 @@ td.del button.confirm { color: var(--c-h2); border-color: var(--c-h2); }
     if (!f) return;
     try {
       const data = JSON.parse(await f.text());
-      const list = (Array.isArray(data) ? data : data.readings || []).filter((r) => r && +r.sys && +r.dia && +r.t);
-      if (!list.length) return note("Faylda ölçmə tapılmadı.");
-      const seen = new Set(readings.map((r) => r.t + ":" + r.sys + ":" + r.dia));
-      let added = 0;
-      list.forEach((r) => {
-        const k = r.t + ":" + r.sys + ":" + r.dia;
-        if (seen.has(k)) return; seen.add(k); added++;
-        readings.push({ id: "l" + r.t + "-" + added, sys: +r.sys, dia: +r.dia, pulse: r.pulse ? +r.pulse : null, t: +r.t, arm: String(r.arm || ""), note: String(r.note || "") });
-      });
-      try { localStorage.setItem("tz-readings", JSON.stringify(readings)); } catch (err) {}
-      render();
-      note(`${added} ölçmə bərpa olundu.`, true);
-    } catch (err) { note("Fayl oxunmadı. Bu proqramın yaratdığı .json ehtiyat faylını seçin."); }
+      const bp = (Array.isArray(data) ? data : data.readings || []).filter((r) => r && +r.sys && +r.dia && +r.t)
+        .map((r) => ({ sys: +r.sys, dia: +r.dia, pulse: r.pulse ? +r.pulse : null, t: +r.t, arm: String(r.arm || ""), note: String(r.note || "") }));
+      const gl = (Array.isArray(data.glucose) ? data.glucose : []).filter((r) => r && +r.v && +r.t)
+        .map((r) => ({ v: +r.v, ctx: ["fasting", "before", "after", "bedtime", "random"].includes(r.ctx) ? r.ctx : "random", t: +r.t, med: String(r.med || ""), note: String(r.note || "") }));
+      if (!bp.length && !gl.length) return note(curMsg(), "Faylda ölçmə tapılmadı.");
+      const a = bpStore.merge(bp, (r) => r.t + ":" + r.sys + ":" + r.dia);
+      const b = gStore.merge(gl, (r) => r.t + ":" + r.v);
+      showTab(tab);
+      note(curMsg(), `Bərpa olundu: ${a} təzyiq, ${b} şəkər ölçməsi.`, true);
+    } catch (err) { note(curMsg(), "Fayl oxunmadı. Bu proqramın yaratdığı .json ehtiyat faylını seçin."); }
   };
 
-  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(render, 150); });
-  renderScale();
-  init();
+  let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => showTab(tab), 150); });
+  showTab(tab);
 })();
 </script>
 </body>
